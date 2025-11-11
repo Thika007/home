@@ -16,6 +16,14 @@ export function LoginPage() {
     navigate("/");
   };
 
+  const handleOwnerDashboardDemo = () => {
+    navigate("/owner-dashboard");
+  };
+
+  const handleSystemAdminDashboardDemo = () => {
+    navigate("/system-admin-dashboard");
+  };
+
   return (
     <section id="login" className="flex flex-1 flex-col overflow-hidden px-[5%] py-12 md:py-16 lg:py-20">
       <div className="container flex flex-1 flex-col overflow-hidden">
@@ -89,6 +97,27 @@ export function LoginPage() {
               Log in
             </Button>
           </form>
+          <div className="mt-10 space-y-4">
+            <h2 className="text-lg font-semibold md:text-xl">Preview upcoming dashboards</h2>
+            <div className="flex flex-col gap-3 md:flex-row">
+              <Button
+                type="button"
+                title="Demo Owner Dashboard"
+                onClick={handleOwnerDashboardDemo}
+                className="flex-1 justify-center"
+              >
+                Demo Owner Dashboard
+              </Button>
+              <Button
+                type="button"
+                title="Demo System Admin Dashboard"
+                onClick={handleSystemAdminDashboardDemo}
+                className="flex-1 justify-center"
+              >
+                Demo System Admin Dashboard
+              </Button>
+            </div>
+          </div>
         </motion.div>
       </div>
     </section>

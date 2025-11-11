@@ -9,6 +9,8 @@ import { Testimonial33 } from "./components/Testimonial33";
 import { Cta57 } from "./components/Cta57";
 import { Footer4 } from "./components/Footer4";
 import { LoginPage } from "./pages/Login";
+import { OwnerDashboardApp } from "./owner-dashboard";
+import { SystemAdminDashboardPage } from "./pages/SystemAdminDashboard";
 
 function HomePage() {
   return (
@@ -27,12 +29,13 @@ function HomePage() {
 
 export default function App() {
   const location = useLocation();
-  const isLoginRoute = location.pathname === "/login";
+  const hideNavbarRoutes = ["/login", "/owner-dashboard"];
+  const shouldHideNavbar = hideNavbarRoutes.some((route) => location.pathname.startsWith(route));
 
   return (
     <div className="flex min-h-screen flex-col bg-background-primary text-foreground-primary">
       <AnimatePresence initial={false}>
-        {!isLoginRoute && (
+        {!shouldHideNavbar && (
           <motion.div
             key="navbar"
             initial={{ y: -120, opacity: 0 }}
@@ -49,6 +52,8 @@ export default function App() {
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/owner-dashboard/*" element={<OwnerDashboardApp />} />
+            <Route path="/system-admin-dashboard" element={<SystemAdminDashboardPage />} />
           </Routes>
         </AnimatePresence>
       </div>
