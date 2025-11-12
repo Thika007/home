@@ -3,7 +3,7 @@ import { RxBarChart, RxPerson, RxChatBubble, RxRocket } from "react-icons/rx";
 
 const METRICS = [
   { label: "Total Orders", value: "0", icon: RxBarChart, accent: "bg-slate-900 text-white" },
-  { label: "Revenue", value: "₹0.00", icon: RxRocket, accent: "bg-emerald-500 text-white" },
+  { label: "Revenue", value: "Rs.0.00", icon: RxRocket, accent: "bg-emerald-500 text-white" },
   { label: "Customers", value: "0", icon: RxPerson, accent: "bg-slate-800 text-white" },
   { label: "Feedback", value: "0", icon: RxChatBubble, accent: "bg-amber-100 text-amber-700" },
 ];
