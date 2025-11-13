@@ -11,6 +11,10 @@ import { Footer4 } from "./components/Footer4";
 import { LoginPage } from "./pages/Login";
 import { OwnerDashboardApp } from "./owner-dashboard";
 import { SystemAdminDashboardPage } from "./pages/SystemAdminDashboard";
+import { UserMenuWelcomePage } from "./UserMenu/pages/UserMenuWelcome";
+import { UserMenuLoginPage } from "./UserMenu/pages/UserMenuLogin";
+import { UserMenuRegisterPage } from "./UserMenu/pages/UserMenuRegister";
+import { UserMenuFeedbackPage } from "./UserMenu/pages/UserMenuFeedback";
 
 function HomePage() {
   return (
@@ -29,7 +33,14 @@ function HomePage() {
 
 export default function App() {
   const location = useLocation();
-  const hideNavbarRoutes = ["/login", "/owner-dashboard"];
+  const hideNavbarRoutes = [
+    "/login",
+    "/owner-dashboard",
+    "/menu-preview",
+    "/menu-login",
+    "/menu-register",
+    "/menu-feedback",
+  ];
   const shouldHideNavbar = hideNavbarRoutes.some((route) => location.pathname.startsWith(route));
 
   return (
@@ -54,6 +65,10 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/owner-dashboard/*" element={<OwnerDashboardApp />} />
             <Route path="/system-admin-dashboard" element={<SystemAdminDashboardPage />} />
+            <Route path="/menu-preview" element={<UserMenuWelcomePage />} />
+            <Route path="/menu-login" element={<UserMenuLoginPage />} />
+            <Route path="/menu-register" element={<UserMenuRegisterPage />} />
+            <Route path="/menu-feedback" element={<UserMenuFeedbackPage />} />
           </Routes>
         </AnimatePresence>
       </div>

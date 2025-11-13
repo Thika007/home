@@ -8,9 +8,43 @@ import {
   RxDoubleArrowLeft,
   RxPerson,
   RxDividerHorizontal,
+  RxChevronDown,
+  RxHome,
 } from "react-icons/rx";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export function Topbar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const menuRef = React.useRef(null);
+
+  const handleNavigateToSettings = (section) => {
+    setIsMenuOpen(false);
+    navigate(`/owner-dashboard/settings?tab=${section}`);
+  };
+
+  const handleLogout = () => {
+    setIsMenuOpen(false);
+    navigate("/login");
+  };
+
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isMenuOpen]);
+
   return (
     <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-slate-200 bg-white/95 px-6 backdrop-blur">
       <img
@@ -58,21 +92,56 @@ export function Topbar() {
         >
           <RxDoubleArrowLeft className="size-5" />
         </button>
-        <div className="flex items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-3 py-2">
-          <div className="flex size-9 items-center justify-center rounded-full bg-emerald-500 text-base font-semibold text-white">
-            BT
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-slate-800">Buddhi Thikshana</p>
-            <p className="text-xs text-slate-500">Owner</p>
-          </div>
-          <RxDividerHorizontal className="size-5 text-slate-300" />
+        <div className="relative" ref={menuRef}>
           <button
             type="button"
-            className="rounded-full border border-slate-200 bg-white p-2 text-slate-500 transition hover:border-emerald-500 hover:text-emerald-500"
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            className="flex items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 transition hover:border-emerald-500"
           >
-            <RxPerson className="size-4" />
+            <div className="flex size-9 items-center justify-center rounded-full bg-emerald-500 text-base font-semibold text-white">
+              BT
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-semibold text-slate-800">Buddhi Thikshana</p>
+              <p className="text-xs text-slate-500">Owner</p>
+            </div>
+            <RxChevronDown
+              className={[
+                "size-4 text-slate-400 transition",
+                isMenuOpen ? "rotate-180 text-emerald-500" : "",
+              ].join(" ")}
+            />
           </button>
+
+          {isMenuOpen && (
+            <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg">
+              <button
+                type="button"
+                onClick={() => handleNavigateToSettings("restaurant")}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+              >
+                <RxHome className="size-4 text-slate-400" />
+                Restaurant Settings
+              </button>
+              <button
+                type="button"
+                onClick={() => handleNavigateToSettings("profile")}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+              >
+                <RxPerson className="size-4 text-slate-400" />
+                Profile Settings
+              </button>
+              <div className="my-1 h-px bg-slate-100" />
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50"
+              >
+                <RxDoubleArrowLeft className="size-4" />
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

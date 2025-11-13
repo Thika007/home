@@ -3,6 +3,8 @@ import { RxRocket, RxClipboard, RxHome, RxChevronDown } from "react-icons/rx";
 import { HiEye, HiCurrencyDollar, HiArrowUp } from "react-icons/hi2";
 import { FaTruck, FaQrcode, FaPrint } from "react-icons/fa";
 
+const MENU_PREVIEW_URL = "/menu-preview";
+
 export function OrdersPage() {
   const [invoiceId, setInvoiceId] = useState("");
   const [storeFilter, setStoreFilter] = useState("all");
@@ -18,6 +20,10 @@ export function OrdersPage() {
 
   // Empty state - no orders yet
   const hasOrders = false;
+
+  const handleOpenApp = () => {
+    window.open(MENU_PREVIEW_URL, "_blank", "noopener,noreferrer");
+  };
 
   return (
     <div className="space-y-6">
@@ -39,7 +45,7 @@ export function OrdersPage() {
             >
               <FaQrcode className="size-5" />
             </button>
-            <button
+          <button
               type="button"
               className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white p-3 text-slate-600 transition hover:border-emerald-500 hover:text-emerald-500"
               title="Print"
@@ -48,6 +54,7 @@ export function OrdersPage() {
             </button>
             <button
               type="button"
+            onClick={handleOpenApp}
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
             >
               <HiEye className="size-5" />

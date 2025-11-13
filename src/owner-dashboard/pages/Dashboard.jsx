@@ -10,7 +10,13 @@ const METRICS = [
   { label: "Feedback", value: "0", icon: RxChatBubble, accent: "bg-amber-100 text-amber-700" },
 ];
 
+const MENU_PREVIEW_URL = "/menu-preview";
+
 export function DashboardPage() {
+  const handleOpenApp = () => {
+    window.open(MENU_PREVIEW_URL, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <div className="space-y-6">
       <header className="rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
@@ -38,6 +44,7 @@ export function DashboardPage() {
             </button>
             <button
               type="button"
+              onClick={handleOpenApp}
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
             >
               <HiEye className="size-5" />

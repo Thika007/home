@@ -20,6 +20,8 @@ import {
 import { HiEye } from "react-icons/hi2";
 import { FaQrcode, FaPrint } from "react-icons/fa";
 
+const MENU_PREVIEW_URL = "/menu-preview";
+
 const TABS = [
   { id: "menus", label: "Menus" },
   { id: "modifiers", label: "Modifiers" },
@@ -53,6 +55,10 @@ const loadMenusFromStorage = () => {
 
 export function MenusPage() {
   const navigate = useNavigate();
+  const handleOpenApp = () => {
+    window.open(MENU_PREVIEW_URL, "_blank", "noopener,noreferrer");
+  };
+
   const [activeTab, setActiveTab] = useState("menus");
   // Initialize menus directly from localStorage to avoid race condition
   const [menus, setMenus] = useState(() => loadMenusFromStorage());
@@ -339,6 +345,7 @@ export function MenusPage() {
             </button>
             <button
               type="button"
+              onClick={handleOpenApp}
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
             >
               <HiEye className="size-5" />

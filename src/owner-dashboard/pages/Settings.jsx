@@ -13,6 +13,8 @@ import { HiEye } from "react-icons/hi2";
 import { HiOutlineCloudUpload } from "react-icons/hi";
 import { FaQrcode, FaPrint, FaInfoCircle, FaDownload } from "react-icons/fa";
 
+const MENU_PREVIEW_URL = "/menu-preview";
+
 const SETTINGS_TABS = [
   { id: "profile", label: "Profile", icon: RxPerson },
   { id: "restaurant", label: "Restaurant", icon: RxHome },
@@ -116,8 +118,8 @@ const InlineToggle = ({ label, checked, onChange }) => (
   </div>
 );
 
-export function SettingsPage() {
-  const [activeTab, setActiveTab] = React.useState("profile");
+export function SettingsPage({ initialTab = "profile" }) {
+  const [activeTab, setActiveTab] = React.useState(initialTab);
   const [restaurantForm, setRestaurantForm] = React.useState({
     restaurantName: "RB Theekshana",
     address: "",
@@ -640,6 +642,10 @@ export function SettingsPage() {
     );
   };
 
+  const handleOpenApp = () => {
+    window.open(MENU_PREVIEW_URL, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <div className="space-y-6">
       {/* Header with title, subtitle, and action buttons */}
@@ -669,6 +675,7 @@ export function SettingsPage() {
             </button>
             <button
               type="button"
+              onClick={handleOpenApp}
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
             >
               <HiEye className="size-5" />

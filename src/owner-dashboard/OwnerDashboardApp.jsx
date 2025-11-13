@@ -1,5 +1,5 @@
 import React from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Sidebar } from "./components/Sidebar";
 import { Topbar } from "./components/Topbar";
 import { DashboardPage } from "./pages/Dashboard";
@@ -14,6 +14,13 @@ import { IntegrationsPage } from "./pages/Integrations";
 import { SettingsPage } from "./pages/Settings";
 
 export function OwnerDashboardApp() {
+  const location = useLocation();
+
+  const getTabFromQuery = () => {
+    const params = new URLSearchParams(location.search);
+    return params.get("tab");
+  };
+
   return (
     <div className="flex h-screen flex-col bg-slate-100 text-slate-900">
       <Topbar />
@@ -32,7 +39,10 @@ export function OwnerDashboardApp() {
             <Route path="menus/:menuId/categories/:categoryId/items/:itemId/visibility" element={<ItemVisibilityPage />} />
             <Route path="orders" element={<OrdersPage />} />
             <Route path="integrations" element={<IntegrationsPage />} />
-            <Route path="settings" element={<SettingsPage />} />
+            <Route
+              path="settings"
+              element={<SettingsPage initialTab={getTabFromQuery()} />}
+            />
             <Route path="*" element={<Navigate to="." replace />} />
           </Routes>
         </main>
