@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   RxPlusCircled,
   RxDownload,
@@ -22,32 +23,7 @@ const TABS = [
   { id: "archive", label: "Archive" },
 ];
 
-const SAMPLE_MENUS = [
-  {
-    id: 1,
-    name: "Sample Menu",
-    status: "Connected",
-    description: "This is a sample description for the sample menu...",
-    category: "dinner",
-    availability: "always",
-  },
-  {
-    id: 2,
-    name: "Sample menu name2",
-    status: "Connected",
-    description: "Another sample menu description.",
-    category: "lunch",
-    availability: "always",
-  },
-  {
-    id: 3,
-    name: "Food",
-    status: "Draft",
-    description: "Draft menu items ready to be published.",
-    category: "breakfast",
-    availability: "scheduled",
-  },
-];
+// No default menus - start with empty array
 
 const INITIAL_MENU_FORM = {
   name: "",
@@ -56,14 +32,38 @@ const INITIAL_MENU_FORM = {
   availability: "always",
 };
 
+// Helper function to load menus from localStorage synchronously
+const loadMenusFromStorage = () => {
+  try {
+    const storedMenus = localStorage.getItem("menus");
+    if (storedMenus) {
+      const parsedMenus = JSON.parse(storedMenus);
+      if (Array.isArray(parsedMenus)) {
+        return parsedMenus;
+      }
+    }
+  } catch (error) {
+    console.error("Error loading menus from localStorage:", error);
+  }
+  return [];
+};
+
 export function MenusPage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("menus");
-  const [menus, setMenus] = useState(SAMPLE_MENUS);
+  // Initialize menus directly from localStorage to avoid race condition
+  const [menus, setMenus] = useState(() => loadMenusFromStorage());
   const [menuView, setMenuView] = useState("list");
   const [menuForm, setMenuForm] = useState(INITIAL_MENU_FORM);
   const [editingMenuId, setEditingMenuId] = useState(null);
   const [openCardMenuId, setOpenCardMenuId] = useState(null);
   const [duplicateTarget, setDuplicateTarget] = useState(null);
+
+  // Store menus in localStorage whenever they change
+  React.useEffect(() => {
+    // Save to localStorage whenever menus change
+    localStorage.setItem("menus", JSON.stringify(menus));
+  }, [menus]);
 
   const isMenuListVisible = activeTab === "menus" && menuView === "list";
   const isCreateOptionsVisible =
@@ -112,17 +112,18 @@ export function MenusPage() {
       return;
     }
 
-    setMenus((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        name: menuForm.name.trim(),
-        status: "Connected",
-        description: menuForm.description.trim(),
-        category: menuForm.category,
-        availability: menuForm.availability,
-      },
-    ]);
+    const newMenu = {
+      id: Date.now(),
+      name: menuForm.name.trim(),
+      status: "Connected",
+      description: menuForm.description.trim(),
+    };
+
+    const updatedMenus = [...menus, newMenu];
+    setMenus(updatedMenus);
+    
+    // Immediately save to localStorage
+    localStorage.setItem("menus", JSON.stringify(updatedMenus));
 
     resetForm();
     setOpenCardMenuId(null);
@@ -134,19 +135,20 @@ export function MenusPage() {
       return;
     }
 
-    setMenus((prev) =>
-      prev.map((menu) =>
-        menu.id === editingMenuId
-          ? {
-              ...menu,
-              name: menuForm.name.trim(),
-              description: menuForm.description.trim(),
-              category: menuForm.category,
-              availability: menuForm.availability,
-            }
-          : menu
-      )
+    const updatedMenus = menus.map((menu) =>
+      menu.id === editingMenuId
+        ? {
+            ...menu,
+            name: menuForm.name.trim(),
+            description: menuForm.description.trim(),
+          }
+        : menu
     );
+    
+    setMenus(updatedMenus);
+    
+    // Immediately save to localStorage
+    localStorage.setItem("menus", JSON.stringify(updatedMenus));
 
     resetForm();
     setOpenCardMenuId(null);
@@ -154,7 +156,12 @@ export function MenusPage() {
   };
 
   const handleDeleteMenu = (menuId) => {
-    setMenus((prev) => prev.filter((menu) => menu.id !== menuId));
+    const updatedMenus = menus.filter((menu) => menu.id !== menuId);
+    setMenus(updatedMenus);
+    
+    // Immediately save to localStorage
+    localStorage.setItem("menus", JSON.stringify(updatedMenus));
+    
     setOpenCardMenuId(null);
   };
 
@@ -166,21 +173,24 @@ export function MenusPage() {
   const confirmDuplicateMenu = () => {
     if (!duplicateTarget) return;
 
-    setMenus((prev) => {
-      const index = prev.findIndex((menu) => menu.id === duplicateTarget.id);
-      const duplicateMenu = {
-        ...duplicateTarget,
-        id: Date.now(),
-      };
+    const index = menus.findIndex((menu) => menu.id === duplicateTarget.id);
+    const duplicateMenu = {
+      ...duplicateTarget,
+      id: Date.now(),
+    };
 
-      if (index === -1) {
-        return [...prev, duplicateMenu];
-      }
+    let updatedMenus;
+    if (index === -1) {
+      updatedMenus = [...menus, duplicateMenu];
+    } else {
+      updatedMenus = [...menus];
+      updatedMenus.splice(index + 1, 0, duplicateMenu);
+    }
 
-      const updated = [...prev];
-      updated.splice(index + 1, 0, duplicateMenu);
-      return updated;
-    });
+    setMenus(updatedMenus);
+    
+    // Immediately save to localStorage
+    localStorage.setItem("menus", JSON.stringify(updatedMenus));
 
     setDuplicateTarget(null);
   };
@@ -205,8 +215,8 @@ export function MenusPage() {
     setMenuForm({
       name: menu.name ?? "",
       description: menu.description ?? "",
-      category: menu.category ?? "",
-      availability: menu.availability ?? "always",
+      category: "",
+      availability: "always",
     });
     setEditingMenuId(menu.id);
     setOpenCardMenuId(null);
@@ -375,33 +385,62 @@ export function MenusPage() {
               </button>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2">
-              {menus.map((menu) => {
+            {menus.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
+                <div className="mx-auto max-w-md">
+                  <div className="mb-4 inline-flex size-16 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                    <RxLockClosed className="size-7" />
+                  </div>
+                  <p className="text-lg font-semibold text-slate-900">No menus yet</p>
+                  <p className="mt-2 text-sm text-slate-500">
+                    Get started by creating your first menu for your restaurant.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={startCreateOptions}
+                    className="mt-6 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                  >
+                    <RxPlusCircled className="size-5" />
+                    Create Your First Menu
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid gap-4 lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2">
+                {menus.map((menu) => {
                 const { id, name, status } = menu;
                 const isMenuActionsOpen = openCardMenuId === id;
 
                 return (
                   <article
                     key={id}
-                    className="relative flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50/80 p-6 text-left shadow-sm transition hover:border-emerald-200 hover:bg-white"
+                    className="relative flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50/80 p-6 text-left shadow-sm transition hover:border-emerald-200 hover:bg-white cursor-pointer"
+                    onClick={() => navigate(`/owner-dashboard/menus/${id}`)}
                   >
                     <div className="flex justify-end">
                       <button
                         type="button"
                         aria-label="Open menu actions"
-                        onClick={() =>
-                          setOpenCardMenuId((current) => (current === id ? null : id))
-                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenCardMenuId((current) => (current === id ? null : id));
+                        }}
                         className="rounded-full border border-transparent p-2 text-slate-400 transition hover:border-slate-200 hover:text-slate-600"
                       >
                         <RxDotsVertical className="size-5" />
                       </button>
 
                       {isMenuActionsOpen && (
-                        <div className="absolute right-4 top-14 z-20 w-44 rounded-xl border border-slate-200 bg-white p-1.5 text-sm text-slate-600 shadow-lg">
+                        <div
+                          className="absolute right-4 top-14 z-20 w-44 rounded-xl border border-slate-200 bg-white p-1.5 text-sm text-slate-600 shadow-lg"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <button
                             type="button"
-                            onClick={() => startEditMenu(menu)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startEditMenu(menu);
+                            }}
                             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-slate-100"
                           >
                             <span className="inline-flex size-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
@@ -411,7 +450,10 @@ export function MenusPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleDeleteMenu(id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteMenu(id);
+                            }}
                             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-rose-600 hover:bg-rose-50"
                           >
                             <span className="inline-flex size-6 items-center justify-center rounded-full bg-rose-100 text-rose-600">
@@ -421,7 +463,10 @@ export function MenusPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleDuplicateMenu(menu)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDuplicateMenu(menu);
+                            }}
                             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-slate-100"
                           >
                             <span className="inline-flex size-6 items-center justify-center rounded-full bg-slate-100 text-slate-600">
@@ -453,17 +498,18 @@ export function MenusPage() {
                 );
               })}
 
-              <button
-                type="button"
-                onClick={startCreateOptions}
-                className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm font-semibold text-slate-500 transition hover:border-emerald-400 hover:text-emerald-500"
-              >
-                <span className="inline-flex size-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                  <RxPlus className="size-7" />
-                </span>
-                <span className="mt-4">Add menu</span>
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={startCreateOptions}
+                  className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm font-semibold text-slate-500 transition hover:border-emerald-400 hover:text-emerald-500"
+                >
+                  <span className="inline-flex size-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                    <RxPlus className="size-7" />
+                  </span>
+                  <span className="mt-4">Add menu</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -545,7 +591,7 @@ export function MenusPage() {
 
         {isScratchFormVisible && (
           <div className="mt-6 space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <button
                 type="button"
                 onClick={() => {
@@ -554,106 +600,110 @@ export function MenusPage() {
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 transition hover:border-emerald-500 hover:text-emerald-500"
               >
                 <RxArrowLeft className="size-5" />
-                Back to methods
-              </button>
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-600 transition hover:border-emerald-400 hover:bg-emerald-100"
-              >
-                <RxQuestionMarkCircled className="size-5" />
-                Need help? View guide
+                Menus / Add new menu
               </button>
             </div>
 
             <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <header className="space-y-1 border-b border-slate-200 pb-4">
-                <h2 className="text-xl font-semibold text-slate-900">Create menu</h2>
-                <p className="text-sm text-slate-500">
-                  Add menu details that will appear across ordering channels.
-                </p>
-              </header>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700" htmlFor="menu-name">
+                    Name *
+                  </label>
+                  <input
+                    id="menu-name"
+                    type="text"
+                    value={menuForm.name}
+                    onChange={handleInputChange("name")}
+                    placeholder="Enter menu name"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 shadow-sm transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                  />
+                </div>
 
-              {renderMenuDetailsFields()}
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700" htmlFor="menu-description">
+                    Description *
+                  </label>
+                  <textarea
+                    id="menu-description"
+                    value={menuForm.description}
+                    onChange={handleInputChange("description")}
+                    placeholder="Enter menu description"
+                    rows={4}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 shadow-sm transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                  />
+                </div>
+              </div>
 
-              <footer className="mt-8 flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMenuView("createOptions");
-                    resetForm();
-                  }}
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 transition hover:border-emerald-500 hover:text-emerald-500"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSaveDraft}
-                  className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-600 transition hover:border-emerald-400 hover:bg-emerald-100"
-                >
-                  Save draft
-                </button>
+              <div className="mt-6 flex justify-end">
                 <button
                   type="button"
                   onClick={handleCreateMenu}
                   className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
                 >
-                  Create menu
+                  Save
                 </button>
-              </footer>
+              </div>
             </section>
           </div>
         )}
 
         {isEditVisible && (
           <div className="mt-6 space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMenuView("list");
-                    resetForm();
-                  }}
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 transition hover:border-emerald-500 hover:text-emerald-500"
-                >
-                  <RxArrowLeft className="size-5" />
-                  Back
-                </button>
-                <span className="text-sm text-slate-400">
-                  Menus <span className="mx-1 text-slate-300">/</span>{" "}
-                  <span className="font-semibold text-slate-600">Edit existing menu</span>
-                </span>
-              </div>
+            <div className="flex flex-wrap items-center gap-3">
               <button
                 type="button"
-                onClick={handleUpdateMenu}
-                className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                onClick={() => {
+                  setMenuView("list");
+                  resetForm();
+                }}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 transition hover:border-emerald-500 hover:text-emerald-500"
               >
-                Save
+                <RxArrowLeft className="size-5" />
+                Menus / Edit existing menu
               </button>
             </div>
 
             <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <header className="border-b border-slate-200">
-                <nav className="flex gap-6 text-sm font-semibold">
-                  <button
-                    type="button"
-                    className="border-b-2 border-emerald-500 pb-3 text-emerald-600"
-                  >
-                    Menus
-                  </button>
-                  <button
-                    type="button"
-                    disabled
-                    className="cursor-not-allowed pb-3 text-slate-300"
-                  >
-                    Localize
-                  </button>
-                </nav>
-              </header>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700" htmlFor="edit-menu-name">
+                    Name *
+                  </label>
+                  <input
+                    id="edit-menu-name"
+                    type="text"
+                    value={menuForm.name}
+                    onChange={handleInputChange("name")}
+                    placeholder="Enter menu name"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 shadow-sm transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                  />
+                </div>
 
-              {renderMenuDetailsFields({ includeTip: false })}
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700" htmlFor="edit-menu-description">
+                    Description *
+                  </label>
+                  <textarea
+                    id="edit-menu-description"
+                    value={menuForm.description}
+                    onChange={handleInputChange("description")}
+                    placeholder="Enter menu description"
+                    rows={4}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 shadow-sm transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleUpdateMenu}
+                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                >
+                  Save
+                </button>
+              </div>
             </section>
           </div>
         )}

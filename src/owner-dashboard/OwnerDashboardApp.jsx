@@ -4,6 +4,11 @@ import { Sidebar } from "./components/Sidebar";
 import { Topbar } from "./components/Topbar";
 import { DashboardPage } from "./pages/Dashboard";
 import { MenusPage } from "./pages/Menus";
+import { MenuDetailPage } from "./pages/MenuDetail";
+import { CategoryFormPage } from "./pages/CategoryForm";
+import { CategoryVisibilityPage } from "./pages/CategoryVisibility";
+import { ItemFormPage } from "./pages/ItemForm";
+import { ItemVisibilityPage } from "./pages/ItemVisibility";
 import { OrdersPage } from "./pages/Orders";
 
 export function OwnerDashboardApp() {
@@ -16,6 +21,13 @@ export function OwnerDashboardApp() {
           <Routes>
             <Route index element={<DashboardPage />} />
             <Route path="menus" element={<MenusPage />} />
+            <Route path="menus/:menuId" element={<MenuDetailPage />} />
+            <Route path="menus/:menuId/categories/new" element={<CategoryFormPage />} />
+            <Route path="menus/:menuId/categories/:categoryId/edit" element={<CategoryFormPage />} />
+            <Route path="menus/:menuId/categories/:categoryId/visibility" element={<CategoryVisibilityPage />} />
+            <Route path="menus/:menuId/categories/:categoryId/items/new" element={<ItemFormPage />} />
+            <Route path="menus/:menuId/categories/:categoryId/items/:itemId/edit" element={<ItemFormPage />} />
+            <Route path="menus/:menuId/categories/:categoryId/items/:itemId/visibility" element={<ItemVisibilityPage />} />
             <Route path="orders" element={<OrdersPage />} />
             <Route path="*" element={<Navigate to="." replace />} />
           </Routes>
