@@ -1,5 +1,7 @@
 import React from "react";
 import { RxBarChart, RxPerson, RxChatBubble, RxRocket } from "react-icons/rx";
+import { HiEye } from "react-icons/hi2";
+import { FaQrcode, FaPrint } from "react-icons/fa";
 
 const METRICS = [
   { label: "Total Orders", value: "0", icon: RxBarChart, accent: "bg-slate-900 text-white" },
@@ -12,10 +14,37 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       <header className="rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
-        <h1 className="text-3xl font-semibold text-slate-900">Dashboard</h1>
-        <p className="mt-2 text-sm text-slate-500">
-          Hi Buddhi Thikshana, welcome back! Track your restaurant performance at a glance.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-semibold text-slate-900">Dashboard</h1>
+            <p className="mt-2 text-sm text-slate-500">
+              Hi Buddhi Thikshana, welcome back! Track your restaurant performance at a glance.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white p-3 text-slate-600 transition hover:border-emerald-500 hover:text-emerald-500"
+              title="QR Code"
+            >
+              <FaQrcode className="size-5" />
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white p-3 text-slate-600 transition hover:border-emerald-500 hover:text-emerald-500"
+              title="Print"
+            >
+              <FaPrint className="size-5" />
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+            >
+              <HiEye className="size-5" />
+              OPEN APP
+            </button>
+          </div>
+        </div>
       </header>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
