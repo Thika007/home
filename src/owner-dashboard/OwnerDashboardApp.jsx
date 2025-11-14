@@ -10,6 +10,8 @@ import { CategoryVisibilityPage } from "./pages/CategoryVisibility";
 import { ItemFormPage } from "./pages/ItemForm";
 import { ItemVisibilityPage } from "./pages/ItemVisibility";
 import { OrdersPage } from "./pages/Orders";
+import { IntegrationsPage } from "./pages/Integrations";
+import { SettingsPage } from "./pages/Settings";
 
 export function OwnerDashboardApp() {
   return (
@@ -29,6 +31,8 @@ export function OwnerDashboardApp() {
             <Route path="menus/:menuId/categories/:categoryId/items/:itemId/edit" element={<ItemFormPage />} />
             <Route path="menus/:menuId/categories/:categoryId/items/:itemId/visibility" element={<ItemVisibilityPage />} />
             <Route path="orders" element={<OrdersPage />} />
+            <Route path="integrations" element={<IntegrationsPage />} />
+            <Route path="settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="." replace />} />
           </Routes>
         </main>

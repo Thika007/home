@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
   RxDashboard,
   RxClipboard,
@@ -8,6 +8,8 @@ import {
   RxBarChart,
   RxQuestionMarkCircled,
   RxComponentInstance,
+  RxLayers,
+  RxGear,
 } from "react-icons/rx";
 import { NavLink } from "react-router-dom";
 
@@ -26,8 +28,35 @@ const SECONDARY_LINKS = [
 ];
 
 export function Sidebar() {
+  const sidebarRef = useRef(null);
+  const SCROLL_STORAGE_KEY = "ownerSidebarScrollTop";
+
+  useEffect(() => {
+    const sidebarElement = sidebarRef.current;
+    if (!sidebarElement) return;
+
+    // Restore saved scroll position if available
+    const savedPosition = sessionStorage.getItem(SCROLL_STORAGE_KEY);
+    if (savedPosition !== null) {
+      sidebarElement.scrollTop = parseInt(savedPosition, 10);
+    }
+
+    const handleScroll = () => {
+      sessionStorage.setItem(SCROLL_STORAGE_KEY, sidebarElement.scrollTop.toString());
+    };
+
+    sidebarElement.addEventListener("scroll", handleScroll);
+
+    return () => {
+      sidebarElement.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
   return (
-    <aside className="hidden h-full w-72 flex-shrink-0 flex-col overflow-y-auto border-r border-slate-200 bg-white px-6 py-8 shadow-sm xl:flex">
+    <aside
+      ref={sidebarRef}
+      className="hidden h-full w-72 flex-shrink-0 flex-col overflow-y-auto border-r border-slate-200 bg-white px-6 py-8 shadow-sm xl:flex"
+    >
       <div className="mb-10 flex items-center gap-3">
         <div className="flex size-10 items-center justify-center rounded-lg bg-emerald-500 text-white font-semibold">
           QT
@@ -74,6 +103,39 @@ export function Sidebar() {
                 </span>
               </li>
             ))}
+          </ul>
+        </div>
+        <div className="mt-auto">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">System</p>
+          <ul className="space-y-1">
+            <li>
+              <NavLink
+                to="/owner-dashboard/integrations"
+                className={({ isActive }) =>
+                  [
+                    "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition",
+                    isActive ? "bg-emerald-500 text-white shadow" : "text-slate-600 hover:bg-slate-100",
+                  ].join(" ")
+                }
+              >
+                <RxLayers className="size-5" />
+                <span>Integrations</span>
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/owner-dashboard/settings"
+                className={({ isActive }) =>
+                  [
+                    "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition",
+                    isActive ? "bg-emerald-500 text-white shadow" : "text-slate-600 hover:bg-slate-100",
+                  ].join(" ")
+                }
+              >
+                <RxGear className="size-5" />
+                <span>Settings</span>
+              </NavLink>
+            </li>
           </ul>
         </div>
       </nav>
