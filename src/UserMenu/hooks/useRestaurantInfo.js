@@ -1,8 +1,4 @@
-import React from "react";
-
-const RESTAURANT_STORAGE_KEY = "restaurantSettings";
-
-const DEFAULT_RESTAURANT = {
+const FALLBACK_RESTAURANT = {
   name: "RB Theekshana",
   tagline: "Passionate about good food and service",
   description:
@@ -15,26 +11,36 @@ const DEFAULT_RESTAURANT = {
   aboutImage:
     "https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=900&q=80",
   logo: "https://d22po4pjz3o32e.cloudfront.net/logo-image.svg",
+  contactEmail: "thibuddhi@gmail.com",
+  hours: [
+    { day: "Monday", time: "00:00 - 23:59" },
+    { day: "Tuesday", time: "00:00 - 23:59" },
+    { day: "Wednesday", time: "00:00 - 23:59" },
+    { day: "Thursday", time: "00:00 - 23:59" },
+    { day: "Friday", time: "00:00 - 23:59" },
+    { day: "Saturday", time: "00:00 - 23:59" },
+    { day: "Sunday", time: "00:00 - 23:59" },
+  ],
 };
 
 export function useRestaurantInfo() {
-  const [info, setInfo] = React.useState(DEFAULT_RESTAURANT);
+  if (typeof window === "undefined") {
+    return FALLBACK_RESTAURANT;
+  }
 
-  React.useEffect(() => {
-    try {
-      const stored = localStorage.getItem(RESTAURANT_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setInfo((current) => ({
-          ...current,
-          ...parsed,
-        }));
-      }
-    } catch (error) {
-      console.warn("Unable to load restaurant settings from storage:", error);
+  try {
+    const stored = localStorage.getItem("restaurantInfo");
+    if (!stored) {
+      return FALLBACK_RESTAURANT;
     }
-  }, []);
-
-  return info;
+    const parsed = JSON.parse(stored);
+    return {
+      ...FALLBACK_RESTAURANT,
+      ...parsed,
+      hours: Array.isArray(parsed?.hours) && parsed.hours.length ? parsed.hours : FALLBACK_RESTAURANT.hours,
+    };
+  } catch (error) {
+    console.warn("Failed to parse restaurant info from localStorage", error);
+    return FALLBACK_RESTAURANT;
+  }
 }
-

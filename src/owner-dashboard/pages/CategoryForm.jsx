@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { RxArrowLeft } from "react-icons/rx";
 
 export function CategoryFormPage() {
   const { menuId, categoryId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [menu, setMenu] = useState(null);
   const [category, setCategory] = useState(null);
   const [formData, setFormData] = useState({
@@ -57,6 +58,8 @@ export function CategoryFormPage() {
     const storedCategories = localStorage.getItem(`categories_${menuId}`);
     const categories = storedCategories ? JSON.parse(storedCategories) : [];
 
+    let newCategoryId = category ? category.id : null;
+
     if (isEditMode && category) {
       // Update existing category
       const updatedCategories = categories.map((cat) =>
@@ -78,6 +81,7 @@ export function CategoryFormPage() {
         menuId: Number(menuId),
         visibility: "visible", // Default visibility
       };
+      newCategoryId = newCategory.id;
 
       // Add to categories array
       const updatedCategories = [...categories, newCategory];
@@ -85,7 +89,12 @@ export function CategoryFormPage() {
     }
 
     // Navigate back to menu detail page
-    navigate(`/owner-dashboard/menus/${menuId}`);
+    navigate(`/owner-dashboard/menus/${menuId}`, {
+      state: {
+        selectedCategoryId: Number(newCategoryId ?? categoryId),
+      },
+      replace: true,
+    });
   };
 
   if (!menu) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   RxArrowLeft,
   RxPlus,
@@ -12,6 +12,7 @@ import { HiCurrencyDollar } from "react-icons/hi2";
 export function ItemFormPage() {
   const { menuId, categoryId, itemId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [menu, setMenu] = useState(null);
   const [category, setCategory] = useState(null);
   const [item, setItem] = useState(null);
@@ -227,7 +228,11 @@ export function ItemFormPage() {
     }
 
     // Navigate back to menu detail page
-    navigate(`/owner-dashboard/menus/${menuId}`);
+    const returnCategoryId = location.state?.returnCategoryId || categoryId;
+    navigate(`/owner-dashboard/menus/${menuId}`, {
+      state: { selectedCategoryId: Number(returnCategoryId) },
+      replace: true,
+    });
   };
 
   if (!menu || !category) {
@@ -252,7 +257,11 @@ export function ItemFormPage() {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate(`/owner-dashboard/menus/${menuId}`)}
+            onClick={() =>
+              navigate(`/owner-dashboard/menus/${menuId}`, {
+                state: { selectedCategoryId: Number(category?.id ?? categoryId) },
+              })
+            }
             className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-slate-600 transition hover:border-emerald-500 hover:text-emerald-500"
           >
             <RxArrowLeft className="size-5" />

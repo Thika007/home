@@ -15,6 +15,7 @@ import { UserMenuWelcomePage } from "./UserMenu/pages/UserMenuWelcome";
 import { UserMenuLoginPage } from "./UserMenu/pages/UserMenuLogin";
 import { UserMenuRegisterPage } from "./UserMenu/pages/UserMenuRegister";
 import { UserMenuFeedbackPage } from "./UserMenu/pages/UserMenuFeedback";
+import { UserMenuMenuPage } from "./UserMenu/pages/UserMenuMenu";
 
 function HomePage() {
   return (
@@ -40,6 +41,7 @@ export default function App() {
     "/menu-login",
     "/menu-register",
     "/menu-feedback",
+    "/menu",
   ];
   const shouldHideNavbar = hideNavbarRoutes.some((route) => location.pathname.startsWith(route));
 
@@ -69,6 +71,7 @@ export default function App() {
             <Route path="/menu-login" element={<UserMenuLoginPage />} />
             <Route path="/menu-register" element={<UserMenuRegisterPage />} />
             <Route path="/menu-feedback" element={<UserMenuFeedbackPage />} />
+            <Route path="/menu" element={<UserMenuMenuPage />} />
           </Routes>
         </AnimatePresence>
       </div>

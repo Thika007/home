@@ -24,25 +24,25 @@ const SAMPLE_MENU_ITEMS = {
     {
       id: 1,
       name: "Beer",
-      price: "10.00 INR",
+      price: "LKR 10.00",
       image: "https://d22po4pjz3o32e.cloudfront.net/placeholder-image.svg",
     },
     {
       id: 2,
       name: "Citrus Juice",
-      price: "10.00 INR",
+      price: "LKR 10.00",
       image: "https://d22po4pjz3o32e.cloudfront.net/placeholder-image.svg",
     },
     {
       id: 3,
       name: "Red Wine",
-      price: "10.00 INR",
+      price: "LKR 10.00",
       image: "https://d22po4pjz3o32e.cloudfront.net/placeholder-image.svg",
     },
     {
       id: 4,
       name: "Beer",
-      price: "1000.00 INR",
+      price: "LKR 1000.00",
       image: "https://d22po4pjz3o32e.cloudfront.net/placeholder-image.svg",
       isNew: true,
     },
@@ -89,25 +89,35 @@ export function MenuDetailPage() {
   useEffect(() => {
     const storedCategories = localStorage.getItem(`categories_${menuId}`);
     if (storedCategories) {
-      const loadedCategories = JSON.parse(storedCategories);
-      setCategories(loadedCategories);
-      // Select first category if available and none is selected or selected doesn't exist
-      if (loadedCategories.length > 0) {
-        setSelectedCategoryId((prev) => {
-          if (prev === null || !loadedCategories.find(cat => cat.id === prev)) {
-            return loadedCategories[0].id;
-          }
-          return prev;
-        });
-      } else {
-        setSelectedCategoryId(null);
-      }
+      setCategories(JSON.parse(storedCategories));
     } else {
-      // If no categories exist, start with empty array
       setCategories([]);
-      setSelectedCategoryId(null);
     }
-  }, [menuId, location.pathname]); // Reload when location changes
+  }, [menuId]);
+
+  useEffect(() => {
+    if (categories.length === 0) {
+      setSelectedCategoryId(null);
+      return;
+    }
+
+    const requestedId = location.state?.selectedCategoryId
+      ? Number(location.state.selectedCategoryId)
+      : null;
+
+    if (requestedId && categories.some((cat) => cat.id === requestedId)) {
+      setSelectedCategoryId(requestedId);
+      navigate(`/owner-dashboard/menus/${menuId}`, { replace: true, state: null });
+      return;
+    }
+
+    setSelectedCategoryId((prev) => {
+      if (prev && categories.some((cat) => cat.id === prev)) {
+        return prev;
+      }
+      return categories[0]?.id ?? null;
+    });
+  }, [categories, location.state, navigate, menuId]);
 
   // Load items for all categories when categories change
   useEffect(() => {
@@ -156,7 +166,9 @@ export function MenuDetailPage() {
     if (!selectedCategoryId) {
       return;
     }
-    navigate(`/owner-dashboard/menus/${menuId}/categories/${selectedCategoryId}/items/new`);
+    navigate(`/owner-dashboard/menus/${menuId}/categories/${selectedCategoryId}/items/new`, {
+      state: { returnCategoryId: selectedCategoryId },
+    });
   };
 
   const handleCategoryVisibility = (categoryId) => {
@@ -623,8 +635,8 @@ export function MenuDetailPage() {
                   ? item.priceOptions[0].price
                   : 0;
                 const priceDisplay = item.priceOptions && item.priceOptions.length > 1
-                  ? `${firstPrice.toFixed(2)} - ${item.priceOptions[item.priceOptions.length - 1].price.toFixed(2)} INR`
-                  : `${firstPrice.toFixed(2)} INR`;
+                ? `LKR ${firstPrice.toFixed(2)} - LKR ${item.priceOptions[item.priceOptions.length - 1].price.toFixed(2)}`
+                : `LKR ${firstPrice.toFixed(2)}`;
 
                 // Display on icons
                 const displayOnIcons = [];

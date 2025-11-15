@@ -13,9 +13,13 @@ export function UserMenuNavbar() {
           <img src={restaurant.logo} alt="Logo" className="h-10 w-auto" />
         </div>
         <nav className="flex flex-wrap items-center gap-4 text-sm font-semibold sm:gap-6">
-          <a href="#menu" className="transition hover:text-emerald-300">
+          <button
+            type="button"
+            onClick={() => navigate("/menu")}
+            className="transition hover:text-emerald-300"
+          >
             MENU
-          </a>
+          </button>
           <button
             type="button"
             onClick={() => navigate("/menu-feedback")}

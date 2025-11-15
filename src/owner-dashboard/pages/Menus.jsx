@@ -214,7 +214,11 @@ export function MenusPage() {
     resetForm();
   };
 
-  const startCreateFromScratch = () => {
+  const startCreateFromScratch = (categoryId) => {
+    if (categoryId) {
+      navigate(`${categoryId}/items/new`, { state: { returnCategoryId: categoryId } });
+      return;
+    }
     setMenuView("startFromScratch");
     setOpenCardMenuId(null);
     resetForm();

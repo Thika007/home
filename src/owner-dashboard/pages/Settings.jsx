@@ -127,7 +127,7 @@ export function SettingsPage({ initialTab = "profile" }) {
     phone: "",
     languages: ["English"],
     defaultLanguage: "English",
-    currency: "INR",
+    currency: "LKR",
     defaultFoodImage: true,
   });
 
@@ -340,8 +340,8 @@ export function SettingsPage({ initialTab = "profile" }) {
                     }
                     className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600 shadow-sm transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                   >
-                    <option value="INR">Indian Rupee (₹)</option>
                     <option value="LKR">Sri Lankan Rupee (Rs)</option>
+                    <option value="INR">Indian Rupee (₹)</option>
                     <option value="USD">US Dollar ($)</option>
                   </select>
                 </div>
