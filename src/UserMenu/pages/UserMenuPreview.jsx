@@ -8,12 +8,12 @@ const FEATURED_SECTIONS = [
       {
         name: "Truffle Mushroom Soup",
         description: "Creamy wild mushroom soup with truffle oil and crispy croutons.",
-        price: "₹420",
+        price: "LKR 420",
       },
       {
         name: "Heirloom Tomato Bruschetta",
         description: "Grilled sourdough topped with basil pesto and feta crumble.",
-        price: "₹380",
+        price: "LKR 380",
       },
     ],
   },
@@ -24,12 +24,12 @@ const FEATURED_SECTIONS = [
       {
         name: "Lemon Butter Salmon",
         description: "Pan-seared Norwegian salmon, asparagus, citrus butter sauce.",
-        price: "₹920",
+        price: "LKR 920",
       },
       {
         name: "Tuscan Chicken Pasta",
         description: "Sun-dried tomatoes, roasted garlic cream, fresh tagliatelle.",
-        price: "₹780",
+        price: "LKR 780",
       },
     ],
   },

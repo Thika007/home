@@ -1,0 +1,518 @@
+2025-11-17 19:27:26.699 +05:30 [INF] Executed DbCommand (281ms) [Parameters=[], CommandType='"Text"', CommandTimeout='60']
+CREATE DATABASE [QRMenuPlatformDB_Dev];
+2025-11-17 19:27:26.846 +05:30 [INF] Executed DbCommand (98ms) [Parameters=[], CommandType='"Text"', CommandTimeout='60']
+IF SERVERPROPERTY('EngineEdition') <> 5
+BEGIN
+    ALTER DATABASE [QRMenuPlatformDB_Dev] SET READ_COMMITTED_SNAPSHOT ON;
+END;
+2025-11-17 19:27:26.874 +05:30 [INF] Executed DbCommand (11ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2025-11-17 19:27:26.960 +05:30 [INF] Executed DbCommand (17ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [__EFMigrationsHistory] (
+    [MigrationId] nvarchar(150) NOT NULL,
+    [ProductVersion] nvarchar(32) NOT NULL,
+    CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+);
+2025-11-17 19:27:26.963 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2025-11-17 19:27:26.992 +05:30 [INF] Executed DbCommand (22ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2025-11-17 19:27:26.998 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [MigrationId], [ProductVersion]
+FROM [__EFMigrationsHistory]
+ORDER BY [MigrationId];
+2025-11-17 19:27:27.022 +05:30 [INF] Applying migration '20251117135656_InitialCreate'.
+2025-11-17 19:27:27.124 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [ActivityLogs] (
+    [Id] int NOT NULL IDENTITY,
+    [UserId] nvarchar(50) NULL,
+    [Action] nvarchar(100) NOT NULL,
+    [Description] nvarchar(500) NULL,
+    [EntityType] nvarchar(50) NULL,
+    [EntityId] int NULL,
+    [IpAddress] nvarchar(45) NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    CONSTRAINT [PK_ActivityLogs] PRIMARY KEY ([Id])
+);
+2025-11-17 19:27:27.126 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [EmailVerifications] (
+    [Id] int NOT NULL IDENTITY,
+    [UserId] int NOT NULL,
+    [Token] nvarchar(500) NOT NULL,
+    [ExpiresAt] datetime2 NOT NULL,
+    [IsUsed] bit NOT NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    CONSTRAINT [PK_EmailVerifications] PRIMARY KEY ([Id])
+);
+2025-11-17 19:27:27.130 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [SystemSettings] (
+    [Id] int NOT NULL IDENTITY,
+    [Key] nvarchar(100) NOT NULL,
+    [Value] nvarchar(2000) NULL,
+    [Description] nvarchar(500) NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    CONSTRAINT [PK_SystemSettings] PRIMARY KEY ([Id])
+);
+2025-11-17 19:27:27.132 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Users] (
+    [Id] int NOT NULL IDENTITY,
+    [Email] nvarchar(100) NOT NULL,
+    [PasswordHash] nvarchar(max) NOT NULL,
+    [FirstName] nvarchar(50) NOT NULL,
+    [LastName] nvarchar(50) NOT NULL,
+    [Phone] nvarchar(20) NULL,
+    [Role] nvarchar(20) NOT NULL,
+    [IsEmailVerified] bit NOT NULL,
+    [IsActive] bit NOT NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    CONSTRAINT [PK_Users] PRIMARY KEY ([Id])
+);
+2025-11-17 19:27:27.138 +05:30 [INF] Executed DbCommand (6ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Customers] (
+    [Id] int NOT NULL IDENTITY,
+    [UserId] int NOT NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    CONSTRAINT [PK_Customers] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Customers_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:27:27.141 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [RestaurantOwners] (
+    [Id] int NOT NULL IDENTITY,
+    [UserId] int NOT NULL,
+    [IsApproved] bit NOT NULL,
+    [ApprovedAt] datetime2 NULL,
+    [ApprovedBy] int NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    CONSTRAINT [PK_RestaurantOwners] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_RestaurantOwners_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:27:27.143 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [SystemAdmins] (
+    [Id] int NOT NULL IDENTITY,
+    [UserId] int NOT NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    CONSTRAINT [PK_SystemAdmins] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_SystemAdmins_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:27:27.149 +05:30 [INF] Executed DbCommand (6ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Restaurants] (
+    [Id] int NOT NULL IDENTITY,
+    [OwnerId] int NOT NULL,
+    [Name] nvarchar(200) NOT NULL,
+    [Tagline] nvarchar(500) NULL,
+    [Description] nvarchar(2000) NULL,
+    [Address] nvarchar(500) NOT NULL,
+    [ContactEmail] nvarchar(100) NOT NULL,
+    [ContactPhone] nvarchar(20) NULL,
+    [HeroImageUrl] nvarchar(500) NULL,
+    [AboutImageUrl] nvarchar(500) NULL,
+    [LogoUrl] nvarchar(500) NULL,
+    [AboutTitle] nvarchar(200) NULL,
+    [AboutBody] nvarchar(2000) NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    CONSTRAINT [PK_Restaurants] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Restaurants_RestaurantOwners_OwnerId] FOREIGN KEY ([OwnerId]) REFERENCES [RestaurantOwners] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:27:27.156 +05:30 [INF] Executed DbCommand (6ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Menus] (
+    [Id] int NOT NULL IDENTITY,
+    [RestaurantId] int NOT NULL,
+    [Name] nvarchar(200) NOT NULL,
+    [Description] nvarchar(500) NULL,
+    [IsActive] bit NOT NULL,
+    [IsDefault] bit NOT NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    CONSTRAINT [PK_Menus] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Menus_Restaurants_RestaurantId] FOREIGN KEY ([RestaurantId]) REFERENCES [Restaurants] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:27:27.160 +05:30 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [OperatingHours] (
+    [Id] int NOT NULL IDENTITY,
+    [RestaurantId] int NOT NULL,
+    [Day] nvarchar(20) NOT NULL,
+    [Time] nvarchar(50) NOT NULL,
+    [IsOpen] bit NOT NULL,
+    CONSTRAINT [PK_OperatingHours] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_OperatingHours_Restaurants_RestaurantId] FOREIGN KEY ([RestaurantId]) REFERENCES [Restaurants] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:27:27.164 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Orders] (
+    [Id] int NOT NULL IDENTITY,
+    [OrderId] nvarchar(50) NOT NULL,
+    [RestaurantId] int NOT NULL,
+    [CustomerId] int NULL,
+    [PaymentMethod] nvarchar(20) NOT NULL,
+    [DeliveryMethod] nvarchar(20) NOT NULL,
+    [Status] nvarchar(20) NOT NULL,
+    [Subtotal] decimal(18,2) NOT NULL,
+    [TipAmount] decimal(18,2) NOT NULL,
+    [Total] decimal(18,2) NOT NULL,
+    [SpecialInstructions] nvarchar(500) NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    [ConfirmedAt] datetime2 NULL,
+    [CompletedAt] datetime2 NULL,
+    CONSTRAINT [PK_Orders] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Orders_Customers_CustomerId] FOREIGN KEY ([CustomerId]) REFERENCES [Customers] ([Id]),
+    CONSTRAINT [FK_Orders_Restaurants_RestaurantId] FOREIGN KEY ([RestaurantId]) REFERENCES [Restaurants] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:27:27.170 +05:30 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [RestaurantSettings] (
+    [Id] int NOT NULL IDENTITY,
+    [RestaurantId] int NOT NULL,
+    [Currency] nvarchar(10) NOT NULL,
+    [DefaultLanguage] nvarchar(50) NOT NULL,
+    [Languages] nvarchar(max) NOT NULL,
+    [DefaultFoodImage] bit NOT NULL,
+    [OrderSettings] nvarchar(max) NOT NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    CONSTRAINT [PK_RestaurantSettings] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_RestaurantSettings_Restaurants_RestaurantId] FOREIGN KEY ([RestaurantId]) REFERENCES [Restaurants] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:27:27.174 +05:30 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Categories] (
+    [Id] int NOT NULL IDENTITY,
+    [MenuId] int NOT NULL,
+    [Name] nvarchar(200) NOT NULL,
+    [Description] nvarchar(500) NULL,
+    [DisplayOrder] int NOT NULL,
+    [IsVisible] bit NOT NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    CONSTRAINT [PK_Categories] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Categories_Menus_MenuId] FOREIGN KEY ([MenuId]) REFERENCES [Menus] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:27:27.179 +05:30 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [MenuItems] (
+    [Id] int NOT NULL IDENTITY,
+    [CategoryId] int NOT NULL,
+    [Name] nvarchar(200) NOT NULL,
+    [Description] nvarchar(1000) NULL,
+    [Price] decimal(18,2) NOT NULL,
+    [ImageUrl] nvarchar(500) NULL,
+    [IsAvailable] bit NOT NULL,
+    [IsVisible] bit NOT NULL,
+    [DisplayOrder] int NOT NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    CONSTRAINT [PK_MenuItems] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_MenuItems_Categories_CategoryId] FOREIGN KEY ([CategoryId]) REFERENCES [Categories] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:27:27.181 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [ItemPriceOptions] (
+    [Id] int NOT NULL IDENTITY,
+    [MenuItemId] int NOT NULL,
+    [OptionName] nvarchar(100) NOT NULL,
+    [Price] decimal(18,2) NOT NULL,
+    [DisplayOrder] int NOT NULL,
+    CONSTRAINT [PK_ItemPriceOptions] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_ItemPriceOptions_MenuItems_MenuItemId] FOREIGN KEY ([MenuItemId]) REFERENCES [MenuItems] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:27:27.206 +05:30 [ERR] Failed executing DbCommand (23ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [OrderItems] (
+    [Id] int NOT NULL IDENTITY,
+    [OrderId] int NOT NULL,
+    [MenuItemId] int NOT NULL,
+    [ItemName] nvarchar(200) NOT NULL,
+    [Quantity] int NOT NULL,
+    [UnitPrice] decimal(18,2) NOT NULL,
+    [TotalPrice] decimal(18,2) NOT NULL,
+    [SpecialInstructions] nvarchar(500) NULL,
+    CONSTRAINT [PK_OrderItems] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_OrderItems_MenuItems_MenuItemId] FOREIGN KEY ([MenuItemId]) REFERENCES [MenuItems] ([Id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_OrderItems_Orders_OrderId] FOREIGN KEY ([OrderId]) REFERENCES [Orders] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:28:04.631 +05:30 [INF] Executed DbCommand (20ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2025-11-17 19:28:04.695 +05:30 [INF] Executed DbCommand (16ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2025-11-17 19:28:04.710 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [MigrationId], [ProductVersion]
+FROM [__EFMigrationsHistory]
+ORDER BY [MigrationId];
+2025-11-17 19:28:51.919 +05:30 [INF] Executed DbCommand (24ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2025-11-17 19:28:51.986 +05:30 [INF] Executed DbCommand (14ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2025-11-17 19:28:51.988 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2025-11-17 19:28:51.989 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2025-11-17 19:28:52.009 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [MigrationId], [ProductVersion]
+FROM [__EFMigrationsHistory]
+ORDER BY [MigrationId];
+2025-11-17 19:28:52.032 +05:30 [INF] Applying migration '20251117135825_InitialCreate'.
+2025-11-17 19:28:52.165 +05:30 [INF] Executed DbCommand (13ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [ActivityLogs] (
+    [Id] int NOT NULL IDENTITY,
+    [UserId] nvarchar(50) NULL,
+    [Action] nvarchar(100) NOT NULL,
+    [Description] nvarchar(500) NULL,
+    [EntityType] nvarchar(50) NULL,
+    [EntityId] int NULL,
+    [IpAddress] nvarchar(45) NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    CONSTRAINT [PK_ActivityLogs] PRIMARY KEY ([Id])
+);
+2025-11-17 19:28:52.168 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [EmailVerifications] (
+    [Id] int NOT NULL IDENTITY,
+    [UserId] int NOT NULL,
+    [Token] nvarchar(500) NOT NULL,
+    [ExpiresAt] datetime2 NOT NULL,
+    [IsUsed] bit NOT NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    CONSTRAINT [PK_EmailVerifications] PRIMARY KEY ([Id])
+);
+2025-11-17 19:28:52.171 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [SystemSettings] (
+    [Id] int NOT NULL IDENTITY,
+    [Key] nvarchar(100) NOT NULL,
+    [Value] nvarchar(2000) NULL,
+    [Description] nvarchar(500) NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    CONSTRAINT [PK_SystemSettings] PRIMARY KEY ([Id])
+);
+2025-11-17 19:28:52.173 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Users] (
+    [Id] int NOT NULL IDENTITY,
+    [Email] nvarchar(100) NOT NULL,
+    [PasswordHash] nvarchar(max) NOT NULL,
+    [FirstName] nvarchar(50) NOT NULL,
+    [LastName] nvarchar(50) NOT NULL,
+    [Phone] nvarchar(20) NULL,
+    [Role] nvarchar(20) NOT NULL,
+    [IsEmailVerified] bit NOT NULL,
+    [IsActive] bit NOT NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    CONSTRAINT [PK_Users] PRIMARY KEY ([Id])
+);
+2025-11-17 19:28:52.175 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Customers] (
+    [Id] int NOT NULL IDENTITY,
+    [UserId] int NOT NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    CONSTRAINT [PK_Customers] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Customers_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:28:52.180 +05:30 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [RestaurantOwners] (
+    [Id] int NOT NULL IDENTITY,
+    [UserId] int NOT NULL,
+    [IsApproved] bit NOT NULL,
+    [ApprovedAt] datetime2 NULL,
+    [ApprovedBy] int NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    CONSTRAINT [PK_RestaurantOwners] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_RestaurantOwners_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:28:52.184 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [SystemAdmins] (
+    [Id] int NOT NULL IDENTITY,
+    [UserId] int NOT NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    CONSTRAINT [PK_SystemAdmins] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_SystemAdmins_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:28:52.187 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Restaurants] (
+    [Id] int NOT NULL IDENTITY,
+    [OwnerId] int NOT NULL,
+    [Name] nvarchar(200) NOT NULL,
+    [Tagline] nvarchar(500) NULL,
+    [Description] nvarchar(2000) NULL,
+    [Address] nvarchar(500) NOT NULL,
+    [ContactEmail] nvarchar(100) NOT NULL,
+    [ContactPhone] nvarchar(20) NULL,
+    [HeroImageUrl] nvarchar(500) NULL,
+    [AboutImageUrl] nvarchar(500) NULL,
+    [LogoUrl] nvarchar(500) NULL,
+    [AboutTitle] nvarchar(200) NULL,
+    [AboutBody] nvarchar(2000) NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    CONSTRAINT [PK_Restaurants] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Restaurants_RestaurantOwners_OwnerId] FOREIGN KEY ([OwnerId]) REFERENCES [RestaurantOwners] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:28:52.192 +05:30 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Menus] (
+    [Id] int NOT NULL IDENTITY,
+    [RestaurantId] int NOT NULL,
+    [Name] nvarchar(200) NOT NULL,
+    [Description] nvarchar(500) NULL,
+    [IsActive] bit NOT NULL,
+    [IsDefault] bit NOT NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    CONSTRAINT [PK_Menus] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Menus_Restaurants_RestaurantId] FOREIGN KEY ([RestaurantId]) REFERENCES [Restaurants] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:28:52.199 +05:30 [INF] Executed DbCommand (6ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [OperatingHours] (
+    [Id] int NOT NULL IDENTITY,
+    [RestaurantId] int NOT NULL,
+    [Day] nvarchar(20) NOT NULL,
+    [Time] nvarchar(50) NOT NULL,
+    [IsOpen] bit NOT NULL,
+    CONSTRAINT [PK_OperatingHours] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_OperatingHours_Restaurants_RestaurantId] FOREIGN KEY ([RestaurantId]) REFERENCES [Restaurants] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:28:52.202 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Orders] (
+    [Id] int NOT NULL IDENTITY,
+    [OrderId] nvarchar(50) NOT NULL,
+    [RestaurantId] int NOT NULL,
+    [CustomerId] int NULL,
+    [PaymentMethod] nvarchar(20) NOT NULL,
+    [DeliveryMethod] nvarchar(20) NOT NULL,
+    [Status] nvarchar(20) NOT NULL,
+    [Subtotal] decimal(18,2) NOT NULL,
+    [TipAmount] decimal(18,2) NOT NULL,
+    [Total] decimal(18,2) NOT NULL,
+    [SpecialInstructions] nvarchar(500) NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    [ConfirmedAt] datetime2 NULL,
+    [CompletedAt] datetime2 NULL,
+    CONSTRAINT [PK_Orders] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Orders_Customers_CustomerId] FOREIGN KEY ([CustomerId]) REFERENCES [Customers] ([Id]),
+    CONSTRAINT [FK_Orders_Restaurants_RestaurantId] FOREIGN KEY ([RestaurantId]) REFERENCES [Restaurants] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:28:52.205 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [RestaurantSettings] (
+    [Id] int NOT NULL IDENTITY,
+    [RestaurantId] int NOT NULL,
+    [Currency] nvarchar(10) NOT NULL,
+    [DefaultLanguage] nvarchar(50) NOT NULL,
+    [Languages] nvarchar(max) NOT NULL,
+    [DefaultFoodImage] bit NOT NULL,
+    [OrderSettings] nvarchar(max) NOT NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    CONSTRAINT [PK_RestaurantSettings] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_RestaurantSettings_Restaurants_RestaurantId] FOREIGN KEY ([RestaurantId]) REFERENCES [Restaurants] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:28:52.208 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Categories] (
+    [Id] int NOT NULL IDENTITY,
+    [MenuId] int NOT NULL,
+    [Name] nvarchar(200) NOT NULL,
+    [Description] nvarchar(500) NULL,
+    [DisplayOrder] int NOT NULL,
+    [IsVisible] bit NOT NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    CONSTRAINT [PK_Categories] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Categories_Menus_MenuId] FOREIGN KEY ([MenuId]) REFERENCES [Menus] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:28:52.211 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [MenuItems] (
+    [Id] int NOT NULL IDENTITY,
+    [CategoryId] int NOT NULL,
+    [Name] nvarchar(200) NOT NULL,
+    [Description] nvarchar(1000) NULL,
+    [Price] decimal(18,2) NOT NULL,
+    [ImageUrl] nvarchar(500) NULL,
+    [IsAvailable] bit NOT NULL,
+    [IsVisible] bit NOT NULL,
+    [DisplayOrder] int NOT NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    CONSTRAINT [PK_MenuItems] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_MenuItems_Categories_CategoryId] FOREIGN KEY ([CategoryId]) REFERENCES [Categories] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:28:52.216 +05:30 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [ItemPriceOptions] (
+    [Id] int NOT NULL IDENTITY,
+    [MenuItemId] int NOT NULL,
+    [OptionName] nvarchar(100) NOT NULL,
+    [Price] decimal(18,2) NOT NULL,
+    [DisplayOrder] int NOT NULL,
+    CONSTRAINT [PK_ItemPriceOptions] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_ItemPriceOptions_MenuItems_MenuItemId] FOREIGN KEY ([MenuItemId]) REFERENCES [MenuItems] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:28:52.218 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [OrderItems] (
+    [Id] int NOT NULL IDENTITY,
+    [OrderId] int NOT NULL,
+    [MenuItemId] int NOT NULL,
+    [ItemName] nvarchar(200) NOT NULL,
+    [Quantity] int NOT NULL,
+    [UnitPrice] decimal(18,2) NOT NULL,
+    [TotalPrice] decimal(18,2) NOT NULL,
+    [SpecialInstructions] nvarchar(500) NULL,
+    CONSTRAINT [PK_OrderItems] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_OrderItems_MenuItems_MenuItemId] FOREIGN KEY ([MenuItemId]) REFERENCES [MenuItems] ([Id]),
+    CONSTRAINT [FK_OrderItems_Orders_OrderId] FOREIGN KEY ([OrderId]) REFERENCES [Orders] ([Id]) ON DELETE CASCADE
+);
+2025-11-17 19:28:52.219 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_Categories_MenuId] ON [Categories] ([MenuId]);
+2025-11-17 19:28:52.220 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [IX_Customers_UserId] ON [Customers] ([UserId]);
+2025-11-17 19:28:52.221 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_ItemPriceOptions_MenuItemId] ON [ItemPriceOptions] ([MenuItemId]);
+2025-11-17 19:28:52.222 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_MenuItems_CategoryId] ON [MenuItems] ([CategoryId]);
+2025-11-17 19:28:52.223 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_Menus_RestaurantId] ON [Menus] ([RestaurantId]);
+2025-11-17 19:28:52.225 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_OperatingHours_RestaurantId] ON [OperatingHours] ([RestaurantId]);
+2025-11-17 19:28:52.227 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_OrderItems_MenuItemId] ON [OrderItems] ([MenuItemId]);
+2025-11-17 19:28:52.229 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_OrderItems_OrderId] ON [OrderItems] ([OrderId]);
+2025-11-17 19:28:52.232 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_Orders_CustomerId] ON [Orders] ([CustomerId]);
+2025-11-17 19:28:52.234 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [IX_Orders_OrderId] ON [Orders] ([OrderId]);
+2025-11-17 19:28:52.235 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_Orders_RestaurantId] ON [Orders] ([RestaurantId]);
+2025-11-17 19:28:52.235 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [IX_RestaurantOwners_UserId] ON [RestaurantOwners] ([UserId]);
+2025-11-17 19:28:52.236 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [IX_Restaurants_OwnerId] ON [Restaurants] ([OwnerId]);
+2025-11-17 19:28:52.237 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [IX_RestaurantSettings_RestaurantId] ON [RestaurantSettings] ([RestaurantId]);
+2025-11-17 19:28:52.238 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [IX_SystemAdmins_UserId] ON [SystemAdmins] ([UserId]);
+2025-11-17 19:28:52.239 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [IX_Users_Email] ON [Users] ([Email]);
+2025-11-17 19:28:52.242 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+VALUES (N'20251117135825_InitialCreate', N'8.0.0');
+2025-11-17 19:39:37.770 +05:30 [INF] User profile is available. Using 'C:\Users\DELL\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-11-17 19:39:38.487 +05:30 [INF] Now listening on: http://localhost:5000
+2025-11-17 19:39:38.487 +05:30 [INF] Now listening on: https://localhost:5001
+2025-11-17 19:39:38.777 +05:30 [INF] Application started. Press Ctrl+C to shut down.
+2025-11-17 19:39:38.778 +05:30 [INF] Hosting environment: Development
+2025-11-17 19:39:38.778 +05:30 [INF] Content root path: F:\QRMenuPlatform\React\home\server\QRMenuPlatform.API
+2025-11-17 19:40:35.121 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5000/swagger - null null
+2025-11-17 19:40:35.517 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5000/swagger - 301 0 null 410.8175ms
+2025-11-17 19:40:35.533 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5000/swagger/index.html - null null
+2025-11-17 19:40:35.716 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5000/swagger/index.html - 200 null text/html;charset=utf-8 182.7498ms
+2025-11-17 19:40:37.897 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5000/swagger/swagger-ui.css - null null
+2025-11-17 19:40:37.918 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5000/swagger/swagger-ui-standalone-preset.js - null null
+2025-11-17 19:40:37.918 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5000/swagger/swagger-ui-bundle.js - null null
+2025-11-17 19:40:37.918 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5000/_framework/aspnetcore-browser-refresh.js - null null
+2025-11-17 19:40:37.936 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5000/_framework/aspnetcore-browser-refresh.js - 200 13772 application/javascript; charset=utf-8 17.1372ms
+2025-11-17 19:40:38.633 +05:30 [INF] Sending file. Request path: '/swagger-ui.css'. Physical path: 'N/A'
+2025-11-17 19:40:38.633 +05:30 [INF] Sending file. Request path: '/swagger-ui-standalone-preset.js'. Physical path: 'N/A'
+2025-11-17 19:40:38.666 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5000/swagger/swagger-ui-standalone-preset.js - 200 230280 text/javascript 747.6426ms
+2025-11-17 19:40:38.667 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5000/swagger/swagger-ui.css - 200 152034 text/css 771.104ms
+2025-11-17 19:40:38.692 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5000/_vs/browserLink - null null
+2025-11-17 19:40:38.881 +05:30 [INF] Sending file. Request path: '/swagger-ui-bundle.js'. Physical path: 'N/A'
+2025-11-17 19:40:38.882 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5000/swagger/swagger-ui-bundle.js - 200 1456926 text/javascript 963.9804ms
+2025-11-17 19:40:39.079 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5000/_vs/browserLink - 200 null text/javascript; charset=UTF-8 388.242ms
+2025-11-17 19:40:39.419 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5000/swagger/v1/swagger.json - null null
+2025-11-17 19:40:39.456 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5000/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 36.8382ms
+2025-11-17 19:40:39.499 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5000/swagger/favicon-32x32.png - null null
+2025-11-17 19:40:39.500 +05:30 [INF] Sending file. Request path: '/favicon-32x32.png'. Physical path: 'N/A'
+2025-11-17 19:40:39.500 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5000/swagger/favicon-32x32.png - 200 628 image/png 1.1599ms

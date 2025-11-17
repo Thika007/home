@@ -1,0 +1,6 @@
+@QRMenuPlatform.API_HostAddress = http://localhost:5076
+
+GET {{QRMenuPlatform.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

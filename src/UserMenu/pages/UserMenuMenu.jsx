@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useRestaurantInfo } from "../hooks/useRestaurantInfo";
 import { usePublicMenuData } from "../hooks/usePublicMenuData";
 import { UserMenuNavbar } from "../components/UserMenuNavbar";
+import { MenuItemPopup } from "../components/MenuItemPopup";
 
 const CategoryButton = ({ label, isActive, onClick }) => (
   <button
@@ -22,6 +23,10 @@ export function UserMenuMenuPage() {
   const menuData = usePublicMenuData();
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = React.useState(null);
+  const [selectedItem, setSelectedItem] = React.useState(null);
+  const [selectedCategory, setSelectedCategory] = React.useState(null);
+  const [currentItemIndex, setCurrentItemIndex] = React.useState(0);
+  const [isPopupOpen, setIsPopupOpen] = React.useState(false);
   const sectionRefs = React.useRef({});
 
   React.useEffect(() => {
@@ -42,6 +47,28 @@ export function UserMenuMenuPage() {
     const el = sectionRefs.current[categoryId];
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  const handleItemClick = (item, category) => {
+    const itemIndex = category.items.findIndex((i) => (i.id || i.name) === (item.id || item.name));
+    setSelectedItem(item);
+    setSelectedCategory(category);
+    setCurrentItemIndex(itemIndex >= 0 ? itemIndex : 0);
+    setIsPopupOpen(true);
+  };
+
+  const handleClosePopup = () => {
+    setIsPopupOpen(false);
+    setSelectedItem(null);
+    setSelectedCategory(null);
+    setCurrentItemIndex(0);
+  };
+
+  const handleNavigateItem = (newIndex) => {
+    if (selectedCategory && selectedCategory.items[newIndex]) {
+      setSelectedItem(selectedCategory.items[newIndex]);
+      setCurrentItemIndex(newIndex);
     }
   };
 
@@ -120,6 +147,7 @@ export function UserMenuMenuPage() {
                       <span className="text-base font-semibold text-slate-900">{item.priceDisplay}</span>
                       <button
                         type="button"
+                        onClick={() => handleItemClick(item, category)}
                         className="flex size-9 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-xl font-semibold text-slate-900 transition hover:bg-slate-900 hover:text-white"
                       >
                         +
@@ -136,6 +164,18 @@ export function UserMenuMenuPage() {
           </section>
         ))}
       </main>
+
+      {/* Menu Item Popup */}
+      {selectedItem && selectedCategory && (
+        <MenuItemPopup
+          item={selectedItem}
+          categoryItems={selectedCategory.items}
+          currentIndex={currentItemIndex}
+          isOpen={isPopupOpen}
+          onClose={handleClosePopup}
+          onNavigate={handleNavigateItem}
+        />
+      )}
 
       <footer className="bg-slate-100 px-6 py-10 text-sm text-slate-700">
         <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-[1fr_auto]">

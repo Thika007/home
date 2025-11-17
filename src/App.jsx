@@ -9,13 +9,17 @@ import { Testimonial33 } from "./components/Testimonial33";
 import { Cta57 } from "./components/Cta57";
 import { Footer4 } from "./components/Footer4";
 import { LoginPage } from "./pages/Login";
+import { OwnerRegisterPage } from "./pages/OwnerRegister";
 import { OwnerDashboardApp } from "./owner-dashboard";
-import { SystemAdminDashboardPage } from "./pages/SystemAdminDashboard";
+import { SystemAdminDashboardApp } from "./system-admin-dashboard/SystemAdminDashboardApp";
 import { UserMenuWelcomePage } from "./UserMenu/pages/UserMenuWelcome";
 import { UserMenuLoginPage } from "./UserMenu/pages/UserMenuLogin";
 import { UserMenuRegisterPage } from "./UserMenu/pages/UserMenuRegister";
 import { UserMenuFeedbackPage } from "./UserMenu/pages/UserMenuFeedback";
 import { UserMenuMenuPage } from "./UserMenu/pages/UserMenuMenu";
+import { UserMenuCartPage } from "./UserMenu/pages/UserMenuCart";
+import { CartProvider } from "./UserMenu/hooks/useCart";
+import { AuthProvider } from "./UserMenu/hooks/useAuth";
 
 function HomePage() {
   return (
@@ -36,12 +40,15 @@ export default function App() {
   const location = useLocation();
   const hideNavbarRoutes = [
     "/login",
+    "/owner-register",
     "/owner-dashboard",
+    "/system-admin-dashboard",
     "/menu-preview",
     "/menu-login",
     "/menu-register",
     "/menu-feedback",
     "/menu",
+    "/menu-cart",
   ];
   const shouldHideNavbar = hideNavbarRoutes.some((route) => location.pathname.startsWith(route));
 
@@ -65,13 +72,49 @@ export default function App() {
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/owner-register" element={<OwnerRegisterPage />} />
             <Route path="/owner-dashboard/*" element={<OwnerDashboardApp />} />
-            <Route path="/system-admin-dashboard" element={<SystemAdminDashboardPage />} />
-            <Route path="/menu-preview" element={<UserMenuWelcomePage />} />
-            <Route path="/menu-login" element={<UserMenuLoginPage />} />
+            <Route path="/system-admin-dashboard/*" element={<SystemAdminDashboardApp />} />
+            <Route
+              path="/menu-preview"
+              element={
+                <AuthProvider>
+                  <CartProvider>
+                    <UserMenuWelcomePage />
+                  </CartProvider>
+                </AuthProvider>
+              }
+            />
+            <Route
+              path="/menu-login"
+              element={
+                <AuthProvider>
+                  <UserMenuLoginPage />
+                </AuthProvider>
+              }
+            />
             <Route path="/menu-register" element={<UserMenuRegisterPage />} />
             <Route path="/menu-feedback" element={<UserMenuFeedbackPage />} />
-            <Route path="/menu" element={<UserMenuMenuPage />} />
+            <Route
+              path="/menu"
+              element={
+                <AuthProvider>
+                  <CartProvider>
+                    <UserMenuMenuPage />
+                  </CartProvider>
+                </AuthProvider>
+              }
+            />
+            <Route
+              path="/menu-cart"
+              element={
+                <AuthProvider>
+                  <CartProvider>
+                    <UserMenuCartPage />
+                  </CartProvider>
+                </AuthProvider>
+              }
+            />
           </Routes>
         </AnimatePresence>
       </div>

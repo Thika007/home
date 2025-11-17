@@ -10,6 +10,27 @@ export function OrdersPage() {
   const [storeFilter, setStoreFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [deliveryFilter, setDeliveryFilter] = useState("all");
+  const [orders, setOrders] = useState(() => {
+    const saved = localStorage.getItem("orders");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Listen for new orders
+  React.useEffect(() => {
+    const handleStorage = () => {
+      const saved = localStorage.getItem("orders");
+      if (saved) {
+        setOrders(JSON.parse(saved));
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    // Also check periodically for same-tab updates
+    const interval = setInterval(handleStorage, 1000);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      clearInterval(interval);
+    };
+  }, []);
 
   const handleResetFilter = () => {
     setInvoiceId("");
@@ -18,8 +39,33 @@ export function OrdersPage() {
     setDeliveryFilter("all");
   };
 
-  // Empty state - no orders yet
-  const hasOrders = false;
+  const handleUpdateOrderStatus = (orderId, newStatus) => {
+    const updatedOrders = orders.map((order) =>
+      order.id === orderId ? { ...order, status: newStatus } : order
+    );
+    setOrders(updatedOrders);
+    localStorage.setItem("orders", JSON.stringify(updatedOrders));
+  };
+
+  // Filter orders
+  const filteredOrders = orders.filter((order) => {
+    if (invoiceId && !order.id.toLowerCase().includes(invoiceId.toLowerCase())) return false;
+    if (paymentFilter !== "all" && order.paymentMethod !== paymentFilter) return false;
+    if (deliveryFilter !== "all" && order.deliveryMethod !== deliveryFilter) return false;
+    return true;
+  });
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+  };
+
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const hasOrders = filteredOrders.length > 0;
 
   const handleOpenApp = () => {
     window.open(MENU_PREVIEW_URL, "_blank", "noopener,noreferrer");
@@ -179,12 +225,69 @@ export function OrdersPage() {
             </thead>
             <tbody className="divide-y divide-slate-200 bg-white">
               {hasOrders ? (
-                // Orders will be rendered here when data is available
-                <tr>
-                  <td colSpan="7" className="px-6 py-4 text-center text-sm text-slate-500">
-                    No orders found
-                  </td>
-                </tr>
+                filteredOrders.map((order) => (
+                  <tr key={order.id} className="hover:bg-slate-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900">
+                      {order.id}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                      {order.paymentMethod === "pending" ? "Pending" : order.paymentMethod}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                      {formatDate(order.createdAt)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                      {formatTime(order.createdAt)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                      {order.deliveryMethod}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                          order.paymentMethod === "pending"
+                            ? "bg-amber-100 text-amber-800"
+                            : "bg-emerald-100 text-emerald-800"
+                        }`}
+                      >
+                        {order.paymentMethod === "pending" ? "Unpaid" : "Paid"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                            order.status === "pending"
+                              ? "bg-blue-100 text-blue-800"
+                              : order.status === "confirmed"
+                              ? "bg-emerald-100 text-emerald-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {order.status}
+                        </span>
+                        {order.status === "pending" && (
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => handleUpdateOrderStatus(order.id, "confirmed")}
+                              className="rounded bg-emerald-500 px-2 py-1 text-xs font-semibold text-white transition hover:bg-emerald-600"
+                              title="Confirm order"
+                            >
+                              ✓
+                            </button>
+                            <button
+                              onClick={() => handleUpdateOrderStatus(order.id, "rejected")}
+                              className="rounded bg-red-500 px-2 py-1 text-xs font-semibold text-white transition hover:bg-red-600"
+                              title="Reject order"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
               ) : (
                 <tr>
                   <td colSpan="7" className="px-6 py-0">

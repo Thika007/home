@@ -88,9 +88,13 @@ export function LoginPage() {
               </label>
               <span className="text-sm text-foreground-secondary">
                 Need an account?{" "}
-                <a href="#" className="font-semibold underline-offset-4 hover:underline">
-                  Contact us
-                </a>
+                <button
+                  type="button"
+                  onClick={() => navigate("/owner-register")}
+                  className="font-semibold underline-offset-4 hover:underline"
+                >
+                  Sign up
+                </button>
               </span>
             </div>
             <Button title="Log in" type="submit" className="w-full justify-center">

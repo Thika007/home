@@ -51,6 +51,11 @@ export function Navbar6() {
     useActive.closeOnDesktopDropdownMenu();
     navigate("/login");
   };
+  const handleSignUpClick = () => {
+    useActive.closeMobileMenu();
+    useActive.closeOnDesktopDropdownMenu();
+    navigate("/owner-register");
+  };
   return (
     <section
       id="relume"
@@ -412,7 +417,7 @@ export function Navbar6() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <Button title="Sign up" variant="secondary" size="sm">
+            <Button title="Sign up" variant="secondary" size="sm" onClick={handleSignUpClick}>
               Sign up
             </Button>
             <Button title="Login" size="sm" onClick={handleLoginClick}>
@@ -824,7 +829,7 @@ export function Navbar6() {
                 </AnimatePresence>
               </div>
               <div className="mt-6 flex flex-col gap-4">
-                <Button title="Sign up" variant="secondary" size="sm">
+                <Button title="Sign up" variant="secondary" size="sm" onClick={handleSignUpClick}>
                   Sign up
                 </Button>
                 <Button title="Login" size="sm" onClick={handleLoginClick}>
