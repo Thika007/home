@@ -8,16 +8,19 @@ import {
   RxTriangleRight,
   RxChevronDown,
   RxCopy,
+  RxClock,
 } from "react-icons/rx";
 import { HiEye } from "react-icons/hi2";
 import { HiOutlineCloudUpload } from "react-icons/hi";
 import { FaQrcode, FaPrint, FaInfoCircle, FaDownload } from "react-icons/fa";
+import { authAPI, restaurantAPI } from "../../services/api";
 
 const MENU_PREVIEW_URL = "/menu-preview";
 
 const SETTINGS_TABS = [
   { id: "profile", label: "Profile", icon: RxPerson },
   { id: "restaurant", label: "Restaurant", icon: RxHome },
+  { id: "hours", label: "Operating Hours", icon: RxClock },
   { id: "notifications", label: "Notifications", icon: RxBell },
   { id: "orders", label: "Order Settings", icon: RxGear },
   { id: "qr", label: "Restaurant QR Code", icon: FaQrcode },
@@ -120,11 +123,35 @@ const InlineToggle = ({ label, checked, onChange }) => (
 
 export function SettingsPage({ initialTab = "profile" }) {
   const [activeTab, setActiveTab] = React.useState(initialTab);
-  const [restaurantForm, setRestaurantForm] = React.useState({
-    restaurantName: "RB Theekshana",
-    address: "",
-    email: "thibuddhi@gmail.com",
+  const [loading, setLoading] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+  const [error, setError] = React.useState("");
+
+  // Profile state
+  const [profileData, setProfileData] = React.useState({
+    firstName: "",
+    lastName: "",
+    email: "",
     phone: "",
+    profilePictureUrl: null,
+  });
+
+  // Restaurant state
+  const [restaurantForm, setRestaurantForm] = React.useState({
+    restaurantName: "",
+    address: "",
+    email: "",
+    phone: "",
+    tagline: "",
+    description: "",
+    aboutTitle: "",
+    aboutBody: "",
+    aboutImageUrl: null,
+    logoUrl: null,
+    heroImageUrl: null,
+    whyChooseUsTitle: "",
+    whyChooseUsBody: "",
+    whyChooseUsImageUrl: null,
     languages: ["English"],
     defaultLanguage: "English",
     currency: "LKR",
@@ -147,12 +174,277 @@ export function SettingsPage({ initialTab = "profile" }) {
     frame: false,
   });
 
+  const [operatingHours, setOperatingHours] = React.useState([
+    { day: "Monday", time: "09:00 - 17:00", isOpen: true },
+    { day: "Tuesday", time: "09:00 - 17:00", isOpen: true },
+    { day: "Wednesday", time: "09:00 - 17:00", isOpen: true },
+    { day: "Thursday", time: "09:00 - 17:00", isOpen: true },
+    { day: "Friday", time: "09:00 - 17:00", isOpen: true },
+    { day: "Saturday", time: "09:00 - 17:00", isOpen: true },
+    { day: "Sunday", time: "Closed", isOpen: false },
+  ]);
+
+  // Load data on mount
+  React.useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      // Load user profile
+      const user = await authAPI.getCurrentUser();
+      setProfileData({
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        profilePictureUrl: user.profilePictureUrl || null,
+      });
+
+      // Load restaurant data
+      const restaurant = await restaurantAPI.getRestaurant();
+      if (restaurant) {
+
+        setRestaurantForm({
+          restaurantName: restaurant.name || "",
+          address: restaurant.address || "",
+          email: restaurant.contactEmail || "",
+          phone: restaurant.contactPhone || "",
+          tagline: restaurant.tagline || "",
+          description: restaurant.description || "",
+          aboutTitle: restaurant.aboutTitle || "",
+          aboutBody: restaurant.aboutBody || "",
+          aboutImageUrl: restaurant.aboutImageUrl || null,
+          logoUrl: restaurant.logoUrl || null,
+          heroImageUrl: restaurant.heroImageUrl || null,
+          whyChooseUsTitle: restaurant.whyChooseUsTitle || "",
+          whyChooseUsBody: restaurant.whyChooseUsBody || "",
+          whyChooseUsImageUrl: restaurant.whyChooseUsImageUrl || null,
+          languages: restaurant.settings?.languages || ["English"],
+          defaultLanguage: restaurant.settings?.defaultLanguage || "English",
+          currency: restaurant.settings?.currency || "LKR",
+          defaultFoodImage: restaurant.settings?.defaultFoodImage ?? true,
+        });
+
+        // Load order settings
+        if (restaurant.settings?.orderSettings) {
+          setOrderSettings({
+            enableTip: restaurant.settings.orderSettings.enableTip ?? true,
+            enableCancelOrder: restaurant.settings.orderSettings.enableCancelOrder ?? false,
+            invoicePrefix: restaurant.settings.orderSettings.invoicePrefix || "INVOICE",
+            enableInvoiceNotes: restaurant.settings.orderSettings.enableInvoiceNotes ?? true,
+            enableScheduledOrders: restaurant.settings.orderSettings.enableScheduledOrders ?? false,
+          });
+        }
+
+        // Load operating hours
+        if (restaurant.operatingHours && restaurant.operatingHours.length > 0) {
+          setOperatingHours(restaurant.operatingHours.map(oh => ({
+            day: oh.day,
+            time: oh.time,
+            isOpen: oh.isOpen,
+          })));
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load data:", err);
+      setError(err.message || "Failed to load settings data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const toggleQrSection = (section) => {
     setQrAccordion((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
+  const handleProfileSave = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      await authAPI.updateUserProfile({
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        phone: profileData.phone || null,
+      });
+      alert("Profile updated successfully!");
+    } catch (err) {
+      setError(err.message || "Failed to update profile");
+      alert(`Failed to update profile: ${err.message || "Please try again."}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleProfilePictureUpload = async (file) => {
+    if (!file) return;
+    
+    setSaving(true);
+    setError("");
+    try {
+      const result = await authAPI.uploadProfilePicture(file);
+      // Update profile with new profile picture URL
+      setProfileData(prev => ({ ...prev, profilePictureUrl: result.imageUrl }));
+      alert("Profile picture uploaded successfully!");
+    } catch (err) {
+      setError(err.message || "Failed to upload logo");
+      alert(`Failed to upload logo: ${err.message || "Please try again."}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRestaurantSave = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      // Update restaurant info
+      await restaurantAPI.updateRestaurant({
+        name: restaurantForm.restaurantName,
+        tagline: restaurantForm.tagline || null,
+        description: restaurantForm.description || null,
+        address: restaurantForm.address,
+        contactEmail: restaurantForm.email,
+        contactPhone: restaurantForm.phone || null,
+        aboutTitle: restaurantForm.aboutTitle || null,
+        aboutBody: restaurantForm.aboutBody || null,
+        whyChooseUsTitle: restaurantForm.whyChooseUsTitle || null,
+        whyChooseUsBody: restaurantForm.whyChooseUsBody || null,
+        whyChooseUsImageUrl: restaurantForm.whyChooseUsImageUrl || null,
+      });
+
+      // Update restaurant settings
+      await restaurantAPI.updateRestaurantSettings({
+        currency: restaurantForm.currency,
+        defaultLanguage: restaurantForm.defaultLanguage,
+        languages: restaurantForm.languages,
+        defaultFoodImage: restaurantForm.defaultFoodImage,
+        orderSettings: orderSettings,
+      });
+
+      alert("Restaurant information updated successfully!");
+    } catch (err) {
+      setError(err.message || "Failed to update restaurant");
+      alert(`Failed to update restaurant: ${err.message || "Please try again."}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRestaurantLogoUpload = async (file) => {
+    if (!file) return;
+    
+    setSaving(true);
+    setError("");
+    try {
+      const result = await restaurantAPI.uploadLogo(file);
+      setRestaurantForm(prev => ({ ...prev, logoUrl: result.imageUrl }));
+      alert("Logo uploaded successfully!");
+    } catch (err) {
+      setError(err.message || "Failed to upload logo");
+      alert(`Failed to upload logo: ${err.message || "Please try again."}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCoverImageUpload = async (file) => {
+    if (!file) return;
+    
+    setSaving(true);
+    setError("");
+    try {
+      const result = await restaurantAPI.uploadCoverImage(file);
+      setRestaurantForm(prev => ({ ...prev, heroImageUrl: result.imageUrl }));
+      alert("Cover image uploaded successfully!");
+    } catch (err) {
+      setError(err.message || "Failed to upload cover image");
+      alert(`Failed to upload cover image: ${err.message || "Please try again."}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAboutImageUpload = async (file) => {
+    if (!file) return;
+    
+    setSaving(true);
+    setError("");
+    try {
+      const result = await restaurantAPI.uploadAboutImage(file);
+      setRestaurantForm(prev => ({ ...prev, aboutImageUrl: result.imageUrl }));
+      alert("About image uploaded successfully!");
+    } catch (err) {
+      setError(err.message || "Failed to upload image");
+      alert(`Failed to upload image: ${err.message || "Please try again."}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleWhyChooseUsImageUpload = async (file) => {
+    if (!file) return;
+    
+    setSaving(true);
+    setError("");
+    try {
+      const result = await restaurantAPI.uploadWhyChooseUsImage(file);
+      setRestaurantForm(prev => ({ ...prev, whyChooseUsImageUrl: result.imageUrl }));
+      alert("Why Choose Us image uploaded successfully!");
+    } catch (err) {
+      setError(err.message || "Failed to upload image");
+      alert(`Failed to upload image: ${err.message || "Please try again."}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleOperatingHoursSave = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      await restaurantAPI.updateOperatingHours(operatingHours);
+      alert("Operating hours updated successfully!");
+    } catch (err) {
+      setError(err.message || "Failed to update operating hours");
+      alert(`Failed to update operating hours: ${err.message || "Please try again."}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleOrderSettingsSave = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      await restaurantAPI.updateRestaurantSettings({
+        currency: restaurantForm.currency,
+        defaultLanguage: restaurantForm.defaultLanguage,
+        languages: restaurantForm.languages,
+        defaultFoodImage: restaurantForm.defaultFoodImage,
+        orderSettings: orderSettings,
+      });
+      alert("Order settings updated successfully!");
+    } catch (err) {
+      setError(err.message || "Failed to update order settings");
+      alert(`Failed to update order settings: ${err.message || "Please try again."}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const renderTabContent = () => {
     if (activeTab === "profile") {
+      if (loading) {
+        return (
+          <section className="rounded-2xl border border-slate-200 bg-white shadow-sm p-10 text-center">
+            <p className="text-sm text-slate-500">Loading profile data...</p>
+          </section>
+        );
+      }
+
       return (
         <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 px-6 py-5">
@@ -170,29 +462,82 @@ export function SettingsPage({ initialTab = "profile" }) {
             </div>
             <button
               type="button"
-              className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600"
+              onClick={handleProfileSave}
+              disabled={saving}
+              className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Save
+              {saving ? "Saving..." : "Save"}
             </button>
           </div>
+
+          {error && (
+            <div className="mx-6 mt-4 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {error}
+            </div>
+          )}
 
           <div className="space-y-10 px-6 py-8">
             <div className="space-y-3">
               <label className="text-sm font-semibold text-slate-700">
-                Logo
+                Profile Picture
               </label>
               <div className="rounded-2xl border-2 border-dashed border-emerald-200 bg-emerald-50/40 px-6 py-12 text-center">
-                <div className="mx-auto flex w-full max-w-xs flex-col items-center gap-3">
-                  <div className="flex size-16 items-center justify-center rounded-full bg-white shadow-sm">
-                    <HiOutlineCloudUpload className="size-7 text-emerald-500" />
+                {profileData.profilePictureUrl ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <img
+                      src={profileData.profilePictureUrl.startsWith('http') ? profileData.profilePictureUrl : `http://localhost:5000${profileData.profilePictureUrl}`}
+                      alt="Profile Picture"
+                      className="h-32 w-32 rounded-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleProfilePictureUpload(file);
+                      }}
+                      className="hidden"
+                      id="profile-picture-upload"
+                    />
+                    <label
+                      htmlFor="profile-picture-upload"
+                      className="cursor-pointer rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                    >
+                      Change Profile Picture
+                    </label>
                   </div>
-                  <p className="text-sm font-semibold text-slate-700">
-                    Preferred size is 400px × 300px
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Drag &apos;n&apos; drop some files here, or click to select files
-                  </p>
-                </div>
+                ) : (
+                  <div className="mx-auto flex w-full max-w-xs flex-col items-center gap-3">
+                    <div className="flex size-16 items-center justify-center rounded-full bg-white shadow-sm">
+                      <HiOutlineCloudUpload className="size-7 text-emerald-500" />
+                    </div>
+                    <p className="text-sm font-semibold text-slate-700">
+                      Preferred size is 400px × 400px
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Drag &apos;n&apos; drop some files here, or click to select files
+                    </p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleProfilePictureUpload(file);
+                      }}
+                      className="hidden"
+                      id="profile-picture-upload"
+                    />
+                    <label
+                      htmlFor="profile-picture-upload"
+                      className="cursor-pointer rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                    >
+                      Upload Profile Picture
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -200,25 +545,37 @@ export function SettingsPage({ initialTab = "profile" }) {
               <InputField
                 label="First name"
                 required
-                placeholder="Buddhi"
-                defaultValue="Buddhi"
+                placeholder="First name"
+                value={profileData.firstName}
+                onChange={(e) =>
+                  setProfileData((prev) => ({ ...prev, firstName: e.target.value }))
+                }
               />
               <InputField
                 label="Last name"
                 required
-                placeholder="Thikshana"
-                defaultValue="Thikshana"
+                placeholder="Last name"
+                value={profileData.lastName}
+                onChange={(e) =>
+                  setProfileData((prev) => ({ ...prev, lastName: e.target.value }))
+                }
               />
               <InputField
                 label="Email"
                 required
                 type="email"
                 placeholder="name@email.com"
-                defaultValue="thibuddhi@gmail.com"
+                value={profileData.email}
+                disabled
+                className="bg-slate-50"
               />
               <InputField
                 label="Phone"
                 placeholder="+94 71 000 0000"
+                value={profileData.phone || ""}
+                onChange={(e) =>
+                  setProfileData((prev) => ({ ...prev, phone: e.target.value }))
+                }
               />
             </div>
           </div>
@@ -227,6 +584,14 @@ export function SettingsPage({ initialTab = "profile" }) {
     }
 
     if (activeTab === "restaurant") {
+      if (loading) {
+        return (
+          <section className="rounded-2xl border border-slate-200 bg-white shadow-sm p-10 text-center">
+            <p className="text-sm text-slate-500">Loading restaurant data...</p>
+          </section>
+        );
+      }
+
       return (
         <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 px-6 py-5">
@@ -241,16 +606,148 @@ export function SettingsPage({ initialTab = "profile" }) {
             </div>
               <button
                 type="button"
-                className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                onClick={handleRestaurantSave}
+                disabled={saving}
+                className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Save
+                {saving ? "Saving..." : "Save"}
               </button>
           </div>
 
+          {error && (
+            <div className="mx-6 mt-4 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {error}
+            </div>
+          )}
+
           <div className="space-y-10 px-6 py-8">
             <div className="grid gap-6 lg:grid-cols-2">
-              <UploadZone label="Logo" required />
-              <UploadZone label="Cover image" required error="Cover image is required" />
+              <div className="space-y-3">
+                <label className="text-sm font-semibold text-slate-700">
+                  Logo
+                </label>
+                <div className="rounded-2xl border-2 border-dashed border-emerald-200 bg-emerald-50/40 px-6 py-12 text-center">
+                  {restaurantForm.logoUrl ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <img
+                        src={restaurantForm.logoUrl.startsWith('http') ? restaurantForm.logoUrl : `http://localhost:5000${restaurantForm.logoUrl}`}
+                        alt="Logo"
+                        className="h-32 w-32 rounded-xl object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleRestaurantLogoUpload(file);
+                        }}
+                        className="hidden"
+                        id="restaurant-logo-upload"
+                      />
+                      <label
+                        htmlFor="restaurant-logo-upload"
+                        className="cursor-pointer rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                      >
+                        Change Logo
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="mx-auto flex w-full max-w-xs flex-col items-center gap-3">
+                      <div className="flex size-14 items-center justify-center rounded-full bg-white shadow-sm">
+                        <HiOutlineCloudUpload className="size-6 text-emerald-500" />
+                      </div>
+                      <p className="text-sm font-semibold text-slate-700">
+                        Preferred size is 400px × 300px
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Drag &apos;n&apos; drop some files here, or click to select files
+                      </p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleRestaurantLogoUpload(file);
+                        }}
+                        className="hidden"
+                        id="restaurant-logo-upload"
+                      />
+                      <label
+                        htmlFor="restaurant-logo-upload"
+                        className="cursor-pointer rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                      >
+                        Upload Logo
+                      </label>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-3">
+                <label className="text-sm font-semibold text-slate-700">
+                  Cover image
+                </label>
+                <div className="rounded-2xl border-2 border-dashed border-emerald-200 bg-emerald-50/40 px-6 py-12 text-center">
+                  {restaurantForm.heroImageUrl ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <img
+                        src={restaurantForm.heroImageUrl.startsWith('http') ? restaurantForm.heroImageUrl : `http://localhost:5000${restaurantForm.heroImageUrl}`}
+                        alt="Cover"
+                        className="h-32 w-full rounded-xl object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleCoverImageUpload(file);
+                        }}
+                        className="hidden"
+                        id="cover-image-upload"
+                      />
+                      <label
+                        htmlFor="cover-image-upload"
+                        className="cursor-pointer rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                      >
+                        Change Cover Image
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="mx-auto flex w-full max-w-xs flex-col items-center gap-3">
+                      <div className="flex size-14 items-center justify-center rounded-full bg-white shadow-sm">
+                        <HiOutlineCloudUpload className="size-6 text-emerald-500" />
+                      </div>
+                      <p className="text-sm font-semibold text-slate-700">
+                        Preferred size is 1200px × 600px
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Drag &apos;n&apos; drop some files here, or click to select files
+                      </p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleCoverImageUpload(file);
+                        }}
+                        className="hidden"
+                        id="cover-image-upload"
+                      />
+                      <label
+                        htmlFor="cover-image-upload"
+                        className="cursor-pointer rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                      >
+                        Upload Cover Image
+                      </label>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
@@ -261,6 +758,14 @@ export function SettingsPage({ initialTab = "profile" }) {
                 value={restaurantForm.restaurantName}
                 onChange={(event) =>
                   setRestaurantForm((prev) => ({ ...prev, restaurantName: event.target.value }))
+                }
+              />
+              <InputField
+                label="Tagline"
+                placeholder="Your restaurant tagline"
+                value={restaurantForm.tagline || ""}
+                onChange={(event) =>
+                  setRestaurantForm((prev) => ({ ...prev, tagline: event.target.value }))
                 }
               />
               <InputField
@@ -276,20 +781,219 @@ export function SettingsPage({ initialTab = "profile" }) {
               <InputField
                 label="Contact number"
                 placeholder="+94 71 000 0000"
-                value={restaurantForm.phone}
+                value={restaurantForm.phone || ""}
                 onChange={(event) =>
                   setRestaurantForm((prev) => ({ ...prev, phone: event.target.value }))
                 }
               />
-              <InputField
-                label="Address"
-                required
-                placeholder="Street, City, Country"
-                value={restaurantForm.address}
-                onChange={(event) =>
-                  setRestaurantForm((prev) => ({ ...prev, address: event.target.value }))
-                }
-              />
+              <div className="md:col-span-2">
+                <InputField
+                  label="Address"
+                  required
+                  placeholder="Street, City, Country"
+                  value={restaurantForm.address}
+                  onChange={(event) =>
+                    setRestaurantForm((prev) => ({ ...prev, address: event.target.value }))
+                  }
+                />
+              </div>
+              <div className="md:col-span-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700">
+                    Description
+                  </label>
+                  <textarea
+                    placeholder="Restaurant description"
+                    value={restaurantForm.description || ""}
+                    onChange={(event) =>
+                      setRestaurantForm((prev) => ({ ...prev, description: event.target.value }))
+                    }
+                    rows={4}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 shadow-sm transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                  />
+                </div>
+              </div>
+              <div className="md:col-span-2">
+                <InputField
+                  label="About Title"
+                  placeholder="About section title"
+                  value={restaurantForm.aboutTitle || ""}
+                  onChange={(event) =>
+                    setRestaurantForm((prev) => ({ ...prev, aboutTitle: event.target.value }))
+                  }
+                />
+              </div>
+              <div className="md:col-span-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700">
+                    About Body
+                  </label>
+                  <textarea
+                    placeholder="About section description"
+                    value={restaurantForm.aboutBody || ""}
+                    onChange={(event) =>
+                      setRestaurantForm((prev) => ({ ...prev, aboutBody: event.target.value }))
+                    }
+                    rows={4}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 shadow-sm transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                  />
+                </div>
+              </div>
+              <div className="md:col-span-2">
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold text-slate-700">
+                    About Image
+                  </label>
+                  <div className="rounded-2xl border-2 border-dashed border-emerald-200 bg-emerald-50/40 px-6 py-10 text-center">
+                    {restaurantForm.aboutImageUrl ? (
+                      <div className="flex flex-col items-center gap-3">
+                        <img
+                          src={restaurantForm.aboutImageUrl.startsWith('http') ? restaurantForm.aboutImageUrl : `http://localhost:5000${restaurantForm.aboutImageUrl}`}
+                          alt="About Image"
+                          className="h-48 w-full rounded-xl object-cover"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleAboutImageUpload(file);
+                          }}
+                          className="hidden"
+                          id="about-image-upload"
+                        />
+                        <label
+                          htmlFor="about-image-upload"
+                          className="cursor-pointer rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                        >
+                          Change About Image
+                        </label>
+                      </div>
+                    ) : (
+                      <div className="mx-auto flex w-full max-w-xs flex-col items-center gap-3">
+                        <div className="flex size-14 items-center justify-center rounded-full bg-white shadow-sm">
+                          <HiOutlineCloudUpload className="size-6 text-emerald-500" />
+                        </div>
+                        <p className="text-sm font-semibold text-slate-700">
+                          Preferred size is 900px × 600px
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Drag &apos;n&apos; drop some files here, or click to select files
+                        </p>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleAboutImageUpload(file);
+                          }}
+                          className="hidden"
+                          id="about-image-upload"
+                        />
+                        <label
+                          htmlFor="about-image-upload"
+                          className="cursor-pointer rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                        >
+                          Upload About Image
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="md:col-span-2">
+                <InputField
+                  label="Why Choose Us Title"
+                  placeholder="Why choose us section title"
+                  value={restaurantForm.whyChooseUsTitle || ""}
+                  onChange={(event) =>
+                    setRestaurantForm((prev) => ({ ...prev, whyChooseUsTitle: event.target.value }))
+                  }
+                />
+              </div>
+              <div className="md:col-span-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700">
+                    Why Choose Us Body
+                  </label>
+                  <textarea
+                    placeholder="Why choose us section description"
+                    value={restaurantForm.whyChooseUsBody || ""}
+                    onChange={(event) =>
+                      setRestaurantForm((prev) => ({ ...prev, whyChooseUsBody: event.target.value }))
+                    }
+                    rows={4}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 shadow-sm transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-sm font-semibold text-slate-700">
+                Why Choose Us Image
+              </label>
+              <div className="rounded-2xl border-2 border-dashed border-emerald-200 bg-emerald-50/40 px-6 py-12 text-center">
+                {restaurantForm.whyChooseUsImageUrl ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <img
+                      src={restaurantForm.whyChooseUsImageUrl.startsWith('http') ? restaurantForm.whyChooseUsImageUrl : `http://localhost:5000${restaurantForm.whyChooseUsImageUrl}`}
+                      alt="Why Choose Us"
+                      className="h-32 w-full rounded-xl object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleWhyChooseUsImageUpload(file);
+                      }}
+                      className="hidden"
+                      id="why-choose-us-image-upload"
+                    />
+                    <label
+                      htmlFor="why-choose-us-image-upload"
+                      className="cursor-pointer rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                    >
+                      Change Image
+                    </label>
+                  </div>
+                ) : (
+                  <div className="mx-auto flex w-full max-w-xs flex-col items-center gap-3">
+                    <div className="flex size-14 items-center justify-center rounded-full bg-white shadow-sm">
+                      <HiOutlineCloudUpload className="size-6 text-emerald-500" />
+                    </div>
+                    <p className="text-sm font-semibold text-slate-700">
+                      Preferred size is 1200px × 600px
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Drag &apos;n&apos; drop some files here, or click to select files
+                    </p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleWhyChooseUsImageUpload(file);
+                      }}
+                      className="hidden"
+                      id="why-choose-us-image-upload"
+                    />
+                    <label
+                      htmlFor="why-choose-us-image-upload"
+                      className="cursor-pointer rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                    >
+                      Upload Image
+                    </label>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
@@ -364,6 +1068,108 @@ export function SettingsPage({ initialTab = "profile" }) {
       );
     }
 
+    if (activeTab === "hours") {
+      if (loading) {
+        return (
+          <section className="rounded-2xl border border-slate-200 bg-white shadow-sm p-10 text-center">
+            <p className="text-sm text-slate-500">Loading operating hours...</p>
+          </section>
+        );
+      }
+
+      return (
+        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 px-6 py-5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
+                Operating Hours
+              </p>
+              <h3 className="text-lg font-semibold text-slate-900">
+                Restaurant Opening Hours
+              </h3>
+              <p className="text-sm text-slate-500">
+                Set your restaurant opening hours for each day of the week.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleOperatingHoursSave}
+              disabled={saving}
+              className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
+          </div>
+
+          {error && (
+            <div className="mx-6 mt-4 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-4 px-6 py-8">
+            {operatingHours.map((hour, index) => (
+              <div
+                key={hour.day}
+                className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+              >
+                <div className="w-32">
+                  <p className="text-sm font-semibold text-slate-800">{hour.day}</p>
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    placeholder="09:00 - 17:00"
+                    value={hour.time}
+                    onChange={(e) => {
+                      const newHours = [...operatingHours];
+                      newHours[index].time = e.target.value;
+                      setOperatingHours(newHours);
+                    }}
+                    disabled={!hour.isOpen}
+                    className={[
+                      "w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-900 shadow-sm transition",
+                      "focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200",
+                      !hour.isOpen && "bg-slate-50 text-slate-400",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  />
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newHours = [...operatingHours];
+                      newHours[index].isOpen = !newHours[index].isOpen;
+                      if (!newHours[index].isOpen) {
+                        newHours[index].time = "Closed";
+                      }
+                      setOperatingHours(newHours);
+                    }}
+                    className={[
+                      "relative inline-flex h-6 w-11 items-center rounded-full transition",
+                      hour.isOpen ? "bg-emerald-500" : "bg-slate-300",
+                    ].join(" ")}
+                  >
+                    <span
+                      className={[
+                        "inline-block size-5 transform rounded-full bg-white transition",
+                        hour.isOpen ? "translate-x-5" : "translate-x-1",
+                      ].join(" ")}
+                    />
+                  </button>
+                  <span className="text-xs font-semibold text-slate-600">
+                    {hour.isOpen ? "Open" : "Closed"}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      );
+    }
+
     if (activeTab === "notifications") {
       return (
         <section className="space-y-5">
@@ -419,6 +1225,14 @@ export function SettingsPage({ initialTab = "profile" }) {
     }
 
     if (activeTab === "orders") {
+      if (loading) {
+        return (
+          <section className="rounded-2xl border border-slate-200 bg-white shadow-sm p-10 text-center">
+            <p className="text-sm text-slate-500">Loading order settings...</p>
+          </section>
+        );
+      }
+
       return (
         <section className="space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
@@ -429,11 +1243,19 @@ export function SettingsPage({ initialTab = "profile" }) {
             </div>
             <button
               type="button"
-              className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600"
+              onClick={handleOrderSettingsSave}
+              disabled={saving}
+              className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Save
+              {saving ? "Saving..." : "Save"}
             </button>
           </div>
+
+          {error && (
+            <div className="mx-6 mt-4 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {error}
+            </div>
+          )}
 
           <section className="space-y-6 rounded-2xl border border-slate-200 bg-white px-5 py-6 shadow-sm">
             <div>

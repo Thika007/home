@@ -18,6 +18,9 @@ public class RestaurantOwner
     public DateTime? ApprovedAt { get; set; }
     public int? ApprovedBy { get; set; } // SystemAdmin Id
     
+    [MaxLength(500)]
+    public string? ProfilePictureUrl { get; set; }
+    
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     // Navigation

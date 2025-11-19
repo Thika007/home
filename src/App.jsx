@@ -9,6 +9,7 @@ import { Testimonial33 } from "./components/Testimonial33";
 import { Cta57 } from "./components/Cta57";
 import { Footer4 } from "./components/Footer4";
 import { LoginPage } from "./pages/Login";
+import { SystemAdminLoginPage } from "./pages/SystemAdminLogin";
 import { OwnerRegisterPage } from "./pages/OwnerRegister";
 import { OwnerDashboardApp } from "./owner-dashboard";
 import { SystemAdminDashboardApp } from "./system-admin-dashboard/SystemAdminDashboardApp";
@@ -40,6 +41,7 @@ export default function App() {
   const location = useLocation();
   const hideNavbarRoutes = [
     "/login",
+    "/system-admin-login",
     "/owner-register",
     "/owner-dashboard",
     "/system-admin-dashboard",
@@ -72,6 +74,7 @@ export default function App() {
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/system-admin-login" element={<SystemAdminLoginPage />} />
             <Route path="/owner-register" element={<OwnerRegisterPage />} />
             <Route path="/owner-dashboard/*" element={<OwnerDashboardApp />} />
             <Route path="/system-admin-dashboard/*" element={<SystemAdminDashboardApp />} />

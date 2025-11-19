@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using QRMenuPlatform.API.Data;
 using QRMenuPlatform.API.Services;
 using Serilog;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,6 +46,17 @@ builder.Services.AddAuthentication("Cookies")
         options.LogoutPath = "/api/auth/logout";
         options.ExpireTimeSpan = TimeSpan.FromDays(7);
         options.SlidingExpiration = true;
+        // Disable automatic redirect for API endpoints
+        options.Events.OnRedirectToLogin = context =>
+        {
+            context.Response.StatusCode = 401;
+            return Task.CompletedTask;
+        };
+        options.Events.OnRedirectToAccessDenied = context =>
+        {
+            context.Response.StatusCode = 403;
+            return Task.CompletedTask;
+        };
     });
 
 builder.Services.AddAuthorization();
@@ -61,8 +73,28 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// Only use HTTPS redirection in production
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
+// Static files for image uploads
+// Serve files from wwwroot (default)
+app.UseStaticFiles();
+
+// Also serve files from ContentRootPath/uploads for backward compatibility
+var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "uploads");
+if (Directory.Exists(uploadsPath))
+{
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
+        RequestPath = "/uploads"
+    });
+}
+
+// CORS must be before Authentication/Authorization
 app.UseCors("AllowReactApp");
 
 app.UseAuthentication();

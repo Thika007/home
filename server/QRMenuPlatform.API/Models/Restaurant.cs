@@ -50,6 +50,15 @@ public class Restaurant
     [MaxLength(2000)]
     public string? AboutBody { get; set; }
     
+    [MaxLength(200)]
+    public string? WhyChooseUsTitle { get; set; }
+    
+    [MaxLength(2000)]
+    public string? WhyChooseUsBody { get; set; }
+    
+    [MaxLength(500)]
+    public string? WhyChooseUsImageUrl { get; set; }
+    
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     

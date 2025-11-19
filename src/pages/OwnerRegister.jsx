@@ -3,6 +3,7 @@ import { Button } from "@relume_io/relume-ui";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { RxArrowLeft } from "react-icons/rx";
+import { authAPI } from "../services/api";
 
 export function OwnerRegisterPage() {
   const navigate = useNavigate();
@@ -53,13 +54,8 @@ export function OwnerRegisterPage() {
       newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Please enter a valid email address";
-    } else {
-      // Check if email already exists
-      const existingAccounts = JSON.parse(localStorage.getItem("ownerAccounts") || "[]");
-      if (existingAccounts.some((acc) => acc.email === formData.email)) {
-        newErrors.email = "This email is already registered";
-      }
     }
+    // Email uniqueness will be checked by the backend API
     
     if (!formData.password) {
       newErrors.password = "Password is required";
@@ -118,85 +114,90 @@ export function OwnerRegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
     
-    if (!validateStep2()) {
+    console.log("Form submitted, validating step 2...");
+    console.log("Form data:", formData);
+    
+    // Validate step 2 - this will set errors state
+    const step2Valid = validateStep2();
+    if (!step2Valid) {
+      console.log("Step 2 validation failed");
+      // Wait a bit for state to update, then scroll to error
+      setTimeout(() => {
+        const firstErrorField = Object.keys(errors)[0];
+        if (firstErrorField) {
+          const errorElement = document.getElementById(firstErrorField);
+          if (errorElement) {
+            errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
+            errorElement.focus();
+          }
+        }
+      }, 100);
+      return;
+    }
+    
+    // Also validate step 1 data is still valid
+    const step1Valid = validateStep1();
+    if (!step1Valid) {
+      console.log("Step 1 validation failed on submit");
+      setCurrentStep(1);
+      setTimeout(() => {
+        const firstErrorField = Object.keys(errors)[0];
+        if (firstErrorField) {
+          const errorElement = document.getElementById(firstErrorField);
+          if (errorElement) {
+            errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
+            errorElement.focus();
+          }
+        }
+      }, 100);
       return;
     }
     
     setIsSubmitting(true);
     
     try {
-      // Create owner account
-      const ownerAccount = {
-        id: `OWNER-${Date.now()}`,
+      console.log("Submitting registration to API...");
+      
+      // Prepare registration data for API
+      const registrationData = {
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
         email: formData.email.trim(),
-        phone: formData.phone.trim() || "",
-        createdAt: new Date().toISOString(),
-        role: "owner",
-      };
-      
-      // Save owner account
-      const existingAccounts = JSON.parse(localStorage.getItem("ownerAccounts") || "[]");
-      existingAccounts.push(ownerAccount);
-      localStorage.setItem("ownerAccounts", JSON.stringify(existingAccounts));
-      
-      // Create restaurant info with defaults
-      const restaurantInfo = {
-        name: formData.restaurantName.trim(),
-        tagline: formData.tagline.trim() || "",
-        description: formData.description.trim() || "",
+        password: formData.password,
+        phone: formData.phone.trim() || null,
+        restaurantName: formData.restaurantName.trim(),
+        tagline: formData.tagline.trim() || null,
+        description: formData.description.trim() || null,
+        address: formData.address.trim(),
         contactEmail: formData.contactEmail.trim(),
-        aboutTitle: `About ${formData.restaurantName.trim()}`,
-        aboutBody: "",
-        heroImage: null,
-        aboutImage: null,
-        logo: null,
-        hours: [
-          { day: "Monday", time: "00:00 - 23:59" },
-          { day: "Tuesday", time: "00:00 - 23:59" },
-          { day: "Wednesday", time: "00:00 - 23:59" },
-          { day: "Thursday", time: "00:00 - 23:59" },
-          { day: "Friday", time: "00:00 - 23:59" },
-          { day: "Saturday", time: "00:00 - 23:59" },
-          { day: "Sunday", time: "00:00 - 23:59" },
-        ],
+        contactPhone: formData.contactPhone.trim() || null,
       };
       
-      localStorage.setItem("restaurantInfo", JSON.stringify(restaurantInfo));
+      // Call API to register owner
+      const response = await authAPI.registerOwner(registrationData);
       
-      // Create restaurant settings with defaults
-      const restaurantSettings = {
-        currency: "LKR",
-        defaultLanguage: "English",
-        languages: ["English"],
-        defaultFoodImage: true,
-        orderSettings: {
-          enableTip: true,
-          enableCancelOrder: false,
-          invoicePrefix: "INVOICE",
-          enableInvoiceNotes: true,
-          enableScheduledOrders: false,
-        },
-      };
+      console.log("Registration successful!", response);
       
-      localStorage.setItem("restaurantSettings", JSON.stringify(restaurantSettings));
-      
-      // Initialize empty arrays
-      if (!localStorage.getItem("menus")) {
-        localStorage.setItem("menus", JSON.stringify([]));
-      }
-      if (!localStorage.getItem("orders")) {
-        localStorage.setItem("orders", JSON.stringify([]));
-      }
-      
-      // Show success and redirect
-      alert("Registration successful! Please log in to continue.");
-      navigate("/login");
+      // Show success message
+      alert("Registration submitted successfully! Your registration is pending admin approval. You will be notified once approved.");
+      navigate("/");
     } catch (error) {
       console.error("Registration error:", error);
-      alert("An error occurred during registration. Please try again.");
+      
+      // Handle specific error cases
+      if (error.status === 400) {
+        const errorMessage = error.data?.message || "Invalid registration data. Please check your information.";
+        if (errorMessage.includes("Email already registered")) {
+          setErrors({ email: "This email is already registered" });
+          setCurrentStep(1);
+        } else {
+          alert(errorMessage);
+        }
+      } else {
+        alert(`An error occurred during registration: ${error.message || "Please try again."}`);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -259,7 +260,7 @@ export function OwnerRegisterPage() {
             </p>
           </div>
 
-          <form onSubmit={currentStep === 2 ? handleSubmit : (e) => e.preventDefault()}>
+          <form onSubmit={currentStep === 2 ? handleSubmit : (e) => { e.preventDefault(); }}>
             <div className="relative overflow-hidden">
               <AnimatePresence mode="wait" custom={currentStep}>
                 {currentStep === 1 && (
@@ -517,6 +518,13 @@ export function OwnerRegisterPage() {
                   type="submit"
                   title="Sign up"
                   disabled={isSubmitting}
+                  onClick={(e) => {
+                    // Ensure form submission works
+                    if (e) {
+                      e.preventDefault();
+                      handleSubmit(e);
+                    }
+                  }}
                   className="flex-1 justify-center"
                 >
                   {isSubmitting ? "Creating account..." : "Sign up"}

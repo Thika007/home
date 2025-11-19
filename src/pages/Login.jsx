@@ -1,15 +1,56 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@relume_io/relume-ui";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { RxArrowLeft } from "react-icons/rx";
+import { authAPI } from "../services/api";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    // TODO: connect with authentication API once available.
+    setError("");
+    setLoading(true);
+
+    try {
+      // Call backend API for login
+      const data = await authAPI.login(email, password);
+
+      // Check if user is SystemAdmin - redirect to system admin login page
+      if (data.role === "SystemAdmin") {
+        setError("Please use the System Admin Login page to access the admin dashboard.");
+        setLoading(false);
+        return;
+      }
+
+      // Check if owner is approved (backend already checks this, but we verify the response)
+      if (data.role === "Owner" && !data.isApproved) {
+        setError("Your account is pending admin approval. Please wait for approval before logging in.");
+        setLoading(false);
+        return;
+      }
+
+      // Store user info in localStorage for frontend state management
+      localStorage.setItem("user", JSON.stringify(data));
+      
+      // Navigate based on role
+      if (data.role === "Owner") {
+        navigate("/owner-dashboard");
+      } else {
+        navigate("/");
+      }
+    } catch (err) {
+      // Handle API errors
+      const errorMessage = err.data?.message || err.message || "An error occurred during login";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBack = () => {
@@ -48,6 +89,11 @@ export function LoginPage() {
               Sign in to manage your restaurant dashboard and track real-time orders.
             </p>
           </div>
+          {error && (
+            <div className="mb-6 rounded border border-red-300 bg-red-50 p-4 text-sm text-red-800">
+              {error}
+            </div>
+          )}
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="mb-2 block text-sm font-semibold">
@@ -57,6 +103,8 @@ export function LoginPage() {
                 id="email"
                 type="email"
                 required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 className="w-full rounded border border-border-primary bg-background-primary px-4 py-3 text-base outline-none transition focus:border-transparent focus:ring-2 focus:ring-foreground-primary/30"
               />
@@ -74,6 +122,8 @@ export function LoginPage() {
                 id="password"
                 type="password"
                 required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 className="w-full rounded border border-border-primary bg-background-primary px-4 py-3 text-base outline-none transition focus:border-transparent focus:ring-2 focus:ring-foreground-primary/30"
               />
@@ -97,10 +147,27 @@ export function LoginPage() {
                 </button>
               </span>
             </div>
-            <Button title="Log in" type="submit" className="w-full justify-center">
-              Log in
+            <Button 
+              title="Log in" 
+              type="submit" 
+              className="w-full justify-center"
+              disabled={loading}
+            >
+              {loading ? "Logging in..." : "Log in"}
             </Button>
           </form>
+          <div className="mt-6 text-center">
+            <p className="text-sm text-foreground-secondary">
+              System Admin?{" "}
+              <button
+                type="button"
+                onClick={() => navigate("/system-admin-login")}
+                className="font-semibold underline-offset-4 hover:underline"
+              >
+                Login here
+              </button>
+            </p>
+          </div>
           <div className="mt-10 space-y-4">
             <h2 className="text-lg font-semibold md:text-xl">Preview upcoming dashboards</h2>
             <div className="flex flex-col gap-3 md:flex-row">

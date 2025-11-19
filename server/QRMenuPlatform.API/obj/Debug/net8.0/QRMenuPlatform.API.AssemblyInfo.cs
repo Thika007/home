@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("QRMenuPlatform.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d839589f01e1636bf9c1816413fbe751cc03ff14")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+734e9e5b8d4e7364a1079f701939f83da03c4ea5")]
 [assembly: System.Reflection.AssemblyProductAttribute("QRMenuPlatform.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("QRMenuPlatform.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

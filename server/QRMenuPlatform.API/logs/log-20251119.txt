@@ -1,0 +1,81 @@
+2025-11-19 15:56:03.557 +05:30 [INF] User profile is available. Using 'C:\Users\DELL\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-11-19 15:56:04.330 +05:30 [INF] Now listening on: http://localhost:5000
+2025-11-19 15:56:04.332 +05:30 [INF] Now listening on: https://localhost:5001
+2025-11-19 15:56:04.841 +05:30 [INF] Application started. Press Ctrl+C to shut down.
+2025-11-19 15:56:04.843 +05:30 [INF] Hosting environment: Development
+2025-11-19 15:56:04.843 +05:30 [INF] Content root path: F:\QRMenuPlatform\React\home\server\QRMenuPlatform.API
+2025-11-19 15:56:18.805 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5000/swagger - null null
+2025-11-19 15:56:19.389 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5000/swagger - 301 0 null 632.8437ms
+2025-11-19 15:56:19.404 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5000/swagger/index.html - null null
+2025-11-19 15:56:19.600 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5000/swagger/index.html - 200 null text/html;charset=utf-8 197.2106ms
+2025-11-19 15:56:19.641 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5000/swagger/swagger-ui.css - null null
+2025-11-19 15:56:19.653 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5000/_framework/aspnetcore-browser-refresh.js - null null
+2025-11-19 15:56:19.653 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5000/swagger/swagger-ui-standalone-preset.js - null null
+2025-11-19 15:56:19.653 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5000/swagger/swagger-ui-bundle.js - null null
+2025-11-19 15:56:19.664 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5000/_vs/browserLink - null null
+2025-11-19 15:56:19.677 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5000/_framework/aspnetcore-browser-refresh.js - 200 13772 application/javascript; charset=utf-8 24.5544ms
+2025-11-19 15:56:19.748 +05:30 [INF] Sending file. Request path: '/swagger-ui.css'. Physical path: 'N/A'
+2025-11-19 15:56:19.749 +05:30 [INF] Sending file. Request path: '/swagger-ui-standalone-preset.js'. Physical path: 'N/A'
+2025-11-19 15:56:19.755 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5000/swagger/swagger-ui.css - 200 152034 text/css 114.4385ms
+2025-11-19 15:56:19.757 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5000/swagger/swagger-ui-standalone-preset.js - 200 230280 text/javascript 103.7148ms
+2025-11-19 15:56:19.774 +05:30 [INF] Sending file. Request path: '/swagger-ui-bundle.js'. Physical path: 'N/A'
+2025-11-19 15:56:19.775 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5000/swagger/swagger-ui-bundle.js - 200 1456926 text/javascript 122.4135ms
+2025-11-19 15:56:19.824 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5000/_vs/browserLink - 200 null text/javascript; charset=UTF-8 160.5785ms
+2025-11-19 15:56:20.157 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5000/swagger/v1/swagger.json - null null
+2025-11-19 15:56:20.178 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5000/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 20.6132ms
+2025-11-19 15:56:57.040 +05:30 [INF] Request starting HTTP/1.1 POST http://localhost:5000/api/Auth/register-owner - application/json 276
+2025-11-19 15:56:57.064 +05:30 [INF] Request finished HTTP/1.1 POST http://localhost:5000/api/Auth/register-owner - 307 0 null 24.3277ms
+2025-11-19 15:56:57.299 +05:30 [INF] Request starting HTTP/2 OPTIONS https://localhost:5001/api/Auth/register-owner - null null
+2025-11-19 15:56:57.320 +05:30 [INF] CORS policy execution failed.
+2025-11-19 15:56:57.320 +05:30 [INF] Request origin http://localhost:5000 does not have permission to access the resource.
+2025-11-19 15:56:57.324 +05:30 [INF] Request finished HTTP/2 OPTIONS https://localhost:5001/api/Auth/register-owner - 204 null null 24.6652ms
+2025-11-19 15:57:51.688 +05:30 [INF] Request starting HTTP/1.1 POST http://localhost:5000/api/Auth/login - application/json 47
+2025-11-19 15:57:51.689 +05:30 [INF] Request finished HTTP/1.1 POST http://localhost:5000/api/Auth/login - 307 0 null 1.3901ms
+2025-11-19 15:57:51.713 +05:30 [INF] Request starting HTTP/2 OPTIONS https://localhost:5001/api/Auth/login - null null
+2025-11-19 15:57:51.715 +05:30 [INF] CORS policy execution failed.
+2025-11-19 15:57:51.715 +05:30 [INF] Request origin http://localhost:5000 does not have permission to access the resource.
+2025-11-19 15:57:51.715 +05:30 [INF] Request finished HTTP/2 OPTIONS https://localhost:5001/api/Auth/login - 204 null null 3.8647ms
+2025-11-19 15:57:55.149 +05:30 [INF] Request starting HTTP/1.1 POST http://localhost:5000/api/Auth/login - application/json 47
+2025-11-19 15:57:55.150 +05:30 [INF] Request finished HTTP/1.1 POST http://localhost:5000/api/Auth/login - 307 0 null 0.949ms
+2025-11-19 15:57:55.154 +05:30 [INF] Request starting HTTP/2 OPTIONS https://localhost:5001/api/Auth/login - null null
+2025-11-19 15:57:55.155 +05:30 [INF] CORS policy execution failed.
+2025-11-19 15:57:55.155 +05:30 [INF] Request origin http://localhost:5000 does not have permission to access the resource.
+2025-11-19 15:57:55.155 +05:30 [INF] Request finished HTTP/2 OPTIONS https://localhost:5001/api/Auth/login - 204 null null 1.6142ms
+2025-11-19 16:00:37.535 +05:30 [INF] Request starting HTTP/1.1 POST http://localhost:5000/api/Auth/register-owner - application/json 475
+2025-11-19 16:00:37.537 +05:30 [INF] Request finished HTTP/1.1 POST http://localhost:5000/api/Auth/register-owner - 307 0 null 2.3583ms
+2025-11-19 16:00:37.570 +05:30 [INF] Request starting HTTP/2 OPTIONS https://localhost:5001/api/Auth/register-owner - null null
+2025-11-19 16:00:37.571 +05:30 [INF] CORS policy execution failed.
+2025-11-19 16:00:37.573 +05:30 [INF] Request origin http://localhost:5000 does not have permission to access the resource.
+2025-11-19 16:00:37.573 +05:30 [INF] Request finished HTTP/2 OPTIONS https://localhost:5001/api/Auth/register-owner - 204 null null 3.7797ms
+2025-11-19 16:12:38.404 +05:30 [INF] Executed DbCommand (17ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2025-11-19 16:12:38.480 +05:30 [INF] Executed DbCommand (14ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2025-11-19 16:12:38.482 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2025-11-19 16:12:38.483 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2025-11-19 16:12:38.503 +05:30 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [MigrationId], [ProductVersion]
+FROM [__EFMigrationsHistory]
+ORDER BY [MigrationId];
+2025-11-19 16:12:38.519 +05:30 [INF] Applying migration '20251119103615_AddDefaultSystemAdmin'.
+2025-11-19 16:12:38.602 +05:30 [INF] Executed DbCommand (22ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+                IF NOT EXISTS (SELECT 1 FROM Users WHERE Email = 'Admin@gmil.com')
+                BEGIN
+                    DECLARE @UserId INT;
+                    INSERT INTO Users (Email, PasswordHash, FirstName, LastName, Role, IsEmailVerified, IsActive, CreatedAt)
+                    VALUES ('Admin@gmil.com', 'YP50QG5/NT7ZefNQ8vu2ouhpCl+n0bDDKYPR2LP5X2c=', 'Admin', 'User', 'SystemAdmin', 1, 1, GETUTCDATE());
+                    SET @UserId = SCOPE_IDENTITY();
+                    INSERT INTO SystemAdmins (UserId, CreatedAt)
+                    VALUES (@UserId, GETUTCDATE());
+                END
+2025-11-19 16:12:38.606 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+VALUES (N'20251119103615_AddDefaultSystemAdmin', N'8.0.0');
+2025-11-19 16:13:00.829 +05:30 [INF] User profile is available. Using 'C:\Users\DELL\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-11-19 16:13:01.041 +05:30 [INF] Now listening on: http://localhost:5000
+2025-11-19 16:13:01.042 +05:30 [INF] Now listening on: https://localhost:5001
+2025-11-19 16:13:01.045 +05:30 [INF] Application started. Press Ctrl+C to shut down.
+2025-11-19 16:13:01.045 +05:30 [INF] Hosting environment: Development
+2025-11-19 16:13:01.045 +05:30 [INF] Content root path: F:\QRMenuPlatform\React\home\server\QRMenuPlatform.API

@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useRestaurantInfo } from "../hooks/useRestaurantInfo";
-import { usePublicMenuData } from "../hooks/usePublicMenuData";
+import { usePublicMenuData, useAllMenus } from "../hooks/usePublicMenuData";
 import { UserMenuNavbar } from "../components/UserMenuNavbar";
 import { MenuItemPopup } from "../components/MenuItemPopup";
 
@@ -20,7 +20,9 @@ const CategoryButton = ({ label, isActive, onClick }) => (
 
 export function UserMenuMenuPage() {
   const restaurant = useRestaurantInfo();
-  const menuData = usePublicMenuData();
+  const allMenus = useAllMenus();
+  const [selectedMenuId, setSelectedMenuId] = React.useState(null);
+  const menuData = usePublicMenuData(selectedMenuId);
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = React.useState(null);
   const [selectedItem, setSelectedItem] = React.useState(null);
@@ -28,6 +30,19 @@ export function UserMenuMenuPage() {
   const [currentItemIndex, setCurrentItemIndex] = React.useState(0);
   const [isPopupOpen, setIsPopupOpen] = React.useState(false);
   const sectionRefs = React.useRef({});
+
+  // Initialize selected menu on mount
+  React.useEffect(() => {
+    if (allMenus.length > 0 && !selectedMenuId) {
+      const defaultMenu =
+        allMenus.find((menu) => menu.isPublished || menu.isPublic) ??
+        allMenus.find((menu) => menu.status === "published") ??
+        allMenus[0];
+      if (defaultMenu) {
+        setSelectedMenuId(defaultMenu.id);
+      }
+    }
+  }, [allMenus, selectedMenuId]);
 
   React.useEffect(() => {
     if (!menuData.categories.length) {
@@ -40,7 +55,7 @@ export function UserMenuMenuPage() {
       }
       return menuData.categories[0].id;
     });
-  }, [menuData.categories]);
+  }, [menuData.categories, selectedMenuId]);
 
   const handleCategoryClick = (categoryId) => {
     setActiveCategory(categoryId);
@@ -91,6 +106,30 @@ export function UserMenuMenuPage() {
             className="w-full border-none text-sm outline-none"
           />
         </div>
+
+        {/* Menu Selection */}
+        {allMenus.length > 1 && (
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-slate-700">Select Menu</label>
+            <div className="flex flex-wrap gap-2">
+              {allMenus.map((menu) => (
+                <button
+                  key={menu.id}
+                  type="button"
+                  onClick={() => setSelectedMenuId(menu.id)}
+                  className={[
+                    "rounded-full border px-4 py-2 text-sm font-semibold transition",
+                    selectedMenuId === menu.id
+                      ? "border-black bg-black text-white"
+                      : "border-slate-300 bg-white text-slate-800 hover:border-black",
+                  ].join(" ")}
+                >
+                  {menu.name || `Menu ${menu.id}`}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm font-semibold">

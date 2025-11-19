@@ -12,7 +12,14 @@ export function UserMenuNavbar() {
     <header className="flex w-full items-center justify-center bg-slate-950 px-6 py-4 text-white">
       <div className="flex w-full max-w-6xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <img src={restaurant.logo} alt="Logo" className="h-10 w-auto" />
+          <img
+            src={restaurant.logo || "https://d22po4pjz3o32e.cloudfront.net/logo-image.svg"}
+            alt="Logo"
+            className="h-10 w-auto"
+            onError={(e) => {
+              e.target.src = "https://d22po4pjz3o32e.cloudfront.net/logo-image.svg";
+            }}
+          />
         </div>
         <nav className="flex flex-wrap items-center gap-4 text-sm font-semibold sm:gap-6">
           <button

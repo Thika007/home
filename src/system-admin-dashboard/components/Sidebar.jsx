@@ -5,11 +5,13 @@ import {
   RxClipboard,
   RxGear,
   RxFileText,
+  RxClock,
 } from "react-icons/rx";
 import { NavLink } from "react-router-dom";
 
 const PRIMARY_LINKS = [
   { label: "Dashboard", icon: RxDashboard, to: "/system-admin-dashboard" },
+  { label: "Pending Registrations", icon: RxClock, to: "/system-admin-dashboard/pending-registrations" },
   { label: "Owners", icon: RxPerson, to: "/system-admin-dashboard/owners" },
   { label: "Orders", icon: RxClipboard, to: "/system-admin-dashboard/orders" },
   { label: "Users", icon: RxPerson, to: "/system-admin-dashboard/users" },

@@ -17,8 +17,19 @@ export function Topbar() {
   // Get admin info from localStorage
   const adminAccount = React.useMemo(() => {
     try {
-      const saved = localStorage.getItem("systemAdminAccount");
-      return saved ? JSON.parse(saved) : { name: "System Admin", email: "admin@system.com" };
+      const saved = localStorage.getItem("systemAdmin");
+      if (saved) {
+        const admin = JSON.parse(saved);
+        // Handle both camelCase (default .NET Core) and PascalCase
+        const firstName = admin.firstName || admin.FirstName || "Admin";
+        const lastName = admin.lastName || admin.LastName || "User";
+        const email = admin.email || admin.Email || "admin@system.com";
+        return { 
+          name: `${firstName} ${lastName}`, 
+          email: email 
+        };
+      }
+      return { name: "System Admin", email: "admin@system.com" };
     } catch {
       return { name: "System Admin", email: "admin@system.com" };
     }
@@ -38,10 +49,21 @@ export function Topbar() {
     navigate("/system-admin-dashboard/settings");
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsMenuOpen(false);
-    localStorage.removeItem("systemAdminAccount");
-    navigate("/login");
+    try {
+      // Call backend logout endpoint
+      await fetch("http://localhost:5000/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Clear localStorage and redirect
+      localStorage.removeItem("systemAdmin");
+      navigate("/system-admin-login");
+    }
   };
 
   React.useEffect(() => {

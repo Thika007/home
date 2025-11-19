@@ -12,12 +12,45 @@ import {
   RxHome,
 } from "react-icons/rx";
 import { useNavigate, useLocation } from "react-router-dom";
+import { restaurantAPI, authAPI } from "../../services/api";
 
 export function Topbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [restaurantLogo, setRestaurantLogo] = React.useState(null);
+  const [profilePicture, setProfilePicture] = React.useState(null);
+  const [userInfo, setUserInfo] = React.useState(null);
   const menuRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Load restaurant logo
+        const restaurant = await restaurantAPI.getRestaurant();
+        if (restaurant?.logoUrl) {
+          const logoUrl = restaurant.logoUrl.startsWith('http') 
+            ? restaurant.logoUrl 
+            : `http://localhost:5000${restaurant.logoUrl}`;
+          setRestaurantLogo(logoUrl);
+        }
+
+        // Load user info and profile picture
+        const user = await authAPI.getCurrentUser();
+        setUserInfo(user);
+        if (user?.profilePictureUrl) {
+          const profileUrl = user.profilePictureUrl.startsWith('http') 
+            ? user.profilePictureUrl 
+            : `http://localhost:5000${user.profilePictureUrl}`;
+          setProfilePicture(profileUrl);
+        }
+      } catch (error) {
+        console.error("Failed to load data:", error);
+      }
+    };
+
+    loadData();
+  }, []);
 
   const handleNavigateToSettings = (section) => {
     setIsMenuOpen(false);
@@ -47,11 +80,22 @@ export function Topbar() {
 
   return (
     <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-slate-200 bg-white/95 px-6 backdrop-blur">
-      <img
-        src="https://d22po4pjz3o32e.cloudfront.net/logo-image.svg"
-        alt="QR Menu Platform logo"
-        className="h-10 w-auto"
-      />
+      {restaurantLogo ? (
+        <img
+          src={restaurantLogo}
+          alt="Restaurant logo"
+          className="h-10 w-auto"
+          onError={(e) => {
+            e.target.src = "https://d22po4pjz3o32e.cloudfront.net/logo-image.svg";
+          }}
+        />
+      ) : (
+        <img
+          src="https://d22po4pjz3o32e.cloudfront.net/logo-image.svg"
+          alt="QR Menu Platform logo"
+          className="h-10 w-auto"
+        />
+      )}
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -98,11 +142,26 @@ export function Topbar() {
             onClick={() => setIsMenuOpen((prev) => !prev)}
             className="flex items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 transition hover:border-emerald-500"
           >
-            <div className="flex size-9 items-center justify-center rounded-full bg-emerald-500 text-base font-semibold text-white">
-              BT
+            {profilePicture ? (
+              <img
+                src={profilePicture}
+                alt="Profile"
+                className="size-9 rounded-full object-cover"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div 
+              className={`flex size-9 items-center justify-center rounded-full bg-emerald-500 text-base font-semibold text-white ${profilePicture ? 'hidden' : ''}`}
+            >
+              {userInfo ? `${userInfo.firstName?.[0] || ''}${userInfo.lastName?.[0] || ''}`.toUpperCase() : 'BT'}
             </div>
             <div className="text-left">
-              <p className="text-sm font-semibold text-slate-800">Buddhi Thikshana</p>
+              <p className="text-sm font-semibold text-slate-800">
+                {userInfo ? `${userInfo.firstName} ${userInfo.lastName}` : 'Buddhi Thikshana'}
+              </p>
               <p className="text-xs text-slate-500">Owner</p>
             </div>
             <RxChevronDown

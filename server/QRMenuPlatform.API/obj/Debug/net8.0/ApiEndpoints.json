@@ -1,6 +1,27 @@
 [
   {
     "ContainingType": "QRMenuPlatform.API.Controllers.AuthController",
+    "Method": "ApproveOwner",
+    "RelativePath": "api/Auth/approve-owner/{id}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "QRMenuPlatform.API.DTOs.ApproveOwnerRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.AuthController",
     "Method": "Login",
     "RelativePath": "api/Auth/login",
     "HttpMethod": "POST",
@@ -37,6 +58,42 @@
   },
   {
     "ContainingType": "QRMenuPlatform.API.Controllers.AuthController",
+    "Method": "GetOwners",
+    "RelativePath": "api/Auth/owners",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.AuthController",
+    "Method": "GetPendingRegistrations",
+    "RelativePath": "api/Auth/pending-registrations",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.AuthController",
+    "Method": "GetPendingRegistration",
+    "RelativePath": "api/Auth/pending-registrations/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.AuthController",
     "Method": "RegisterOwner",
     "RelativePath": "api/Auth/register-owner",
     "HttpMethod": "POST",
@@ -46,6 +103,59 @@
       {
         "Name": "request",
         "Type": "QRMenuPlatform.API.DTOs.RegisterOwnerRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.AuthController",
+    "Method": "RejectOwner",
+    "RelativePath": "api/Auth/reject-owner/{id}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "QRMenuPlatform.API.DTOs.RejectOwnerRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.AuthController",
+    "Method": "UploadProfilePicture",
+    "RelativePath": "api/Auth/upload-profile-picture",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "file",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.AuthController",
+    "Method": "UpdateUserProfile",
+    "RelativePath": "api/Auth/user/profile",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "QRMenuPlatform.API.DTOs.UpdateUserProfileRequest",
         "IsRequired": true
       }
     ],
@@ -132,6 +242,164 @@
         "Name": "restaurantId",
         "Type": "System.Int32",
         "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.RestaurantController",
+    "Method": "GetRestaurant",
+    "RelativePath": "api/Restaurant",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.RestaurantController",
+    "Method": "UpdateRestaurant",
+    "RelativePath": "api/Restaurant",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "QRMenuPlatform.API.DTOs.UpdateRestaurantRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.RestaurantController",
+    "Method": "GetOperatingHours",
+    "RelativePath": "api/Restaurant/operating-hours",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.RestaurantController",
+    "Method": "UpdateOperatingHours",
+    "RelativePath": "api/Restaurant/operating-hours",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "requests",
+        "Type": "System.Collections.Generic.List\u00601[[QRMenuPlatform.API.DTOs.OperatingHourRequest, QRMenuPlatform.API, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.RestaurantController",
+    "Method": "GetPublicRestaurantInfo",
+    "RelativePath": "api/Restaurant/public/{restaurantId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "restaurantId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.RestaurantController",
+    "Method": "GetRestaurantSettings",
+    "RelativePath": "api/Restaurant/settings",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.RestaurantController",
+    "Method": "UpdateRestaurantSettings",
+    "RelativePath": "api/Restaurant/settings",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "QRMenuPlatform.API.DTOs.UpdateRestaurantSettingsRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.RestaurantController",
+    "Method": "UploadAboutImage",
+    "RelativePath": "api/Restaurant/upload-about-image",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "file",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.RestaurantController",
+    "Method": "UploadCover",
+    "RelativePath": "api/Restaurant/upload-cover",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "file",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.RestaurantController",
+    "Method": "UploadLogo",
+    "RelativePath": "api/Restaurant/upload-logo",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "file",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.RestaurantController",
+    "Method": "UploadWhyChooseUsImage",
+    "RelativePath": "api/Restaurant/upload-why-choose-us-image",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "file",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []

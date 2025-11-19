@@ -598,7 +598,7 @@ export function MenusPage() {
                 <div className="mt-6 flex">
                   <button
                     type="button"
-                    onClick={startCreateFromScratch}
+                    onClick={() => startCreateFromScratch()}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
                   >
                     Setup Menu

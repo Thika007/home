@@ -109,7 +109,30 @@ function formatPriceDisplay(item) {
   return "Price on request";
 }
 
-function loadMenuFromStorage() {
+function loadAllMenus() {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const menusRaw = localStorage.getItem("menus");
+    if (!menusRaw) {
+      return [];
+    }
+
+    const menus = JSON.parse(menusRaw);
+    if (!Array.isArray(menus) || menus.length === 0) {
+      return [];
+    }
+
+    return menus;
+  } catch (error) {
+    console.warn("Failed to load menus", error);
+    return [];
+  }
+}
+
+function loadMenuFromStorage(menuId = null) {
   if (typeof window === "undefined") {
     return buildFallbackMenu();
   }
@@ -125,10 +148,15 @@ function loadMenuFromStorage() {
       return buildFallbackMenu();
     }
 
-    const selectedMenu =
-      menus.find((menu) => menu.isPublished || menu.isPublic) ??
-      menus.find((menu) => menu.status === "published") ??
-      menus[0];
+    let selectedMenu;
+    if (menuId) {
+      selectedMenu = menus.find((menu) => menu.id === menuId || String(menu.id) === String(menuId));
+    } else {
+      selectedMenu =
+        menus.find((menu) => menu.isPublished || menu.isPublic) ??
+        menus.find((menu) => menu.status === "published") ??
+        menus[0];
+    }
 
     if (!selectedMenu) {
       return buildFallbackMenu();
@@ -163,6 +191,7 @@ function loadMenuFromStorage() {
     }
 
     return {
+      menuId: selectedMenu.id,
       menuName: selectedMenu.name || FALLBACK_MENU_TEMPLATE.menuName,
       categories: nonEmptyCategories,
       hasLiveData: true,
@@ -173,13 +202,34 @@ function loadMenuFromStorage() {
   }
 }
 
-export function usePublicMenuData() {
-  const [menuData, setMenuData] = React.useState(() => loadMenuFromStorage());
+export function usePublicMenuData(menuId = null) {
+  const [menuData, setMenuData] = React.useState(() => loadMenuFromStorage(menuId));
+
+  React.useEffect(() => {
+    setMenuData(loadMenuFromStorage(menuId));
+  }, [menuId]);
 
   React.useEffect(() => {
     const handleStorage = (event) => {
       if (!event.key || event.key === "menus" || event.key.startsWith("categories_") || event.key.startsWith("items_")) {
-        setMenuData(loadMenuFromStorage());
+        setMenuData(loadMenuFromStorage(menuId));
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, [menuId]);
+
+  return menuData;
+}
+
+export function useAllMenus() {
+  const [menus, setMenus] = React.useState(() => loadAllMenus());
+
+  React.useEffect(() => {
+    const handleStorage = (event) => {
+      if (!event.key || event.key === "menus") {
+        setMenus(loadAllMenus());
       }
     };
 
@@ -187,6 +237,6 @@ export function usePublicMenuData() {
     return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
-  return menuData;
+  return menus;
 }
 

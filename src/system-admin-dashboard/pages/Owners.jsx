@@ -1,5 +1,6 @@
 import React from "react";
-import { RxPerson, RxMagnifyingGlass } from "react-icons/rx";
+import { RxPerson, RxMagnifyingGlass, RxCheck, RxCross2 } from "react-icons/rx";
+import { authAPI } from "../../services/api";
 
 export function OwnersPage() {
   const [owners, setOwners] = React.useState([]);
@@ -7,24 +8,34 @@ export function OwnersPage() {
   const [statusFilter, setStatusFilter] = React.useState("all");
 
   React.useEffect(() => {
-    // Load owners from localStorage
-    const loadOwners = () => {
-      const ownerAccounts = JSON.parse(localStorage.getItem("ownerAccounts") || "[]");
-      setOwners(ownerAccounts);
+    const loadOwners = async () => {
+      try {
+        const data = await authAPI.getOwners();
+        setOwners(data);
+      } catch (error) {
+        console.error("Failed to load owners:", error);
+        setOwners([]);
+      }
     };
 
     loadOwners();
-    // Listen for storage changes
-    window.addEventListener("storage", loadOwners);
-    return () => window.removeEventListener("storage", loadOwners);
+    const interval = setInterval(loadOwners, 5000); // Refresh every 5 seconds
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   const filteredOwners = owners.filter((owner) => {
     const matchesSearch =
       owner.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       owner.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      owner.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+      owner.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      owner.restaurantName?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = 
+      statusFilter === "all" || 
+      (statusFilter === "approved" && owner.isApproved) ||
+      (statusFilter === "pending" && !owner.isApproved);
+    return matchesSearch && matchesStatus;
   });
 
   const getInitials = (firstName, lastName) => {
@@ -33,13 +44,29 @@ export function OwnersPage() {
     return (first + last).toUpperCase() || "NA";
   };
 
+  const getStatusBadge = (isApproved) => {
+    if (isApproved) {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800">
+          <RxCheck className="size-3" />
+          Approved
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
+        Pending
+      </span>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <header className="rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold text-slate-900">Owners Management</h1>
-            <p className="mt-2 text-sm text-slate-500">View and manage all registered restaurant owners.</p>
+            <p className="mt-2 text-sm text-slate-500">View and manage all approved restaurant owners.</p>
           </div>
         </div>
       </header>
@@ -51,7 +78,7 @@ export function OwnersPage() {
             <RxMagnifyingGlass className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search by name or email..."
+              placeholder="Search by name, email or restaurant..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
@@ -63,8 +90,8 @@ export function OwnersPage() {
             className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
           >
             <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
+            <option value="approved">Approved</option>
+            <option value="pending">Pending</option>
           </select>
         </div>
       </div>
@@ -77,6 +104,9 @@ export function OwnersPage() {
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
                   Owner
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Restaurant
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
                   Email
@@ -111,15 +141,14 @@ export function OwnersPage() {
                         </div>
                       </div>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{owner.restaurantName || "—"}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{owner.email}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{owner.phone || "—"}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
                       {owner.createdAt ? new Date(owner.createdAt).toLocaleDateString() : "—"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800">
-                        Active
-                      </span>
+                      {getStatusBadge(owner.isApproved)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <button

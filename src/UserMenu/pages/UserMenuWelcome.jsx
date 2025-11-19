@@ -3,17 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useRestaurantInfo } from "../hooks/useRestaurantInfo";
 import { UserMenuNavbar } from "../components/UserMenuNavbar";
 
-const WHY_CHOOSE_US = [
-  {
-    title: "Why choose us?",
-    subtitle: "This is a grill for you!",
-    description:
-      "The Uptown Grill invites you into a modern-day American grill and bar featuring great inventive food and beverage using only the best possible ingredients. Our goal is to provide an affordable, high quality dining experience for our customers.",
-    image:
-      "https://images.unsplash.com/photo-1473093226795-af9932fe5856?auto=format&fit=crop&w=900&q=80",
-  },
-];
-
 export function UserMenuWelcomePage() {
   const restaurant = useRestaurantInfo();
   const navigate = useNavigate();
@@ -75,15 +64,12 @@ export function UserMenuWelcomePage() {
           </div>
         </section>
 
-        {WHY_CHOOSE_US.map((card) => (
-          <section
-            key={card.title}
-            className="grid gap-10 lg:grid-cols-2 lg:items-center lg:[&>*:nth-child(even)]:order-last"
-          >
+        {restaurant.whyChooseUsTitle || restaurant.whyChooseUsBody || restaurant.whyChooseUsImage ? (
+          <section className="grid gap-10 lg:grid-cols-2 lg:items-center lg:[&>*:nth-child(even)]:order-last">
             <div className="space-y-3">
-              <p className="text-xs uppercase tracking-[0.4em] text-emerald-600">{card.title}</p>
-              <h3 className="text-2xl font-semibold">{card.subtitle}</h3>
-              <p className="text-base text-slate-600">{card.description}</p>
+              <p className="text-xs uppercase tracking-[0.4em] text-emerald-600">Why choose us?</p>
+              <h3 className="text-2xl font-semibold">{restaurant.whyChooseUsTitle || "Why choose us?"}</h3>
+              <p className="text-base text-slate-600">{restaurant.whyChooseUsBody || ""}</p>
               <button
                 type="button"
                 onClick={handleMenuNavigate}
@@ -92,11 +78,20 @@ export function UserMenuWelcomePage() {
                 Our Menu
               </button>
             </div>
-            <div className="overflow-hidden rounded-3xl shadow-lg">
-              <img src={card.image} alt={card.subtitle} className="h-full w-full object-cover" />
-            </div>
+            {restaurant.whyChooseUsImage && (
+              <div className="overflow-hidden rounded-3xl shadow-lg">
+                <img
+                  src={restaurant.whyChooseUsImage}
+                  alt={restaurant.whyChooseUsTitle || "Why choose us"}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.target.style.display = "none";
+                  }}
+                />
+              </div>
+            )}
           </section>
-        ))}
+        ) : null}
       </main>
 
       <footer className="bg-slate-100 px-6 py-10 text-sm text-slate-700">
