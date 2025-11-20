@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { RxArrowLeft, RxInfoCircled } from "react-icons/rx";
+import { menuAPI } from "../../services/api";
 
 const VISIBILITY_OPTIONS = [
   {
@@ -32,68 +33,98 @@ export function ItemVisibilityPage() {
   const [category, setCategory] = useState(null);
   const [item, setItem] = useState(null);
   const [selectedVisibility, setSelectedVisibility] = useState("visible");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  // Load menu, category, and item data from localStorage
+  // Load menu, category, and item data from API
   useEffect(() => {
-    const storedMenus = localStorage.getItem("menus");
-    if (storedMenus) {
-      const menus = JSON.parse(storedMenus);
-      const foundMenu = menus.find((m) => m.id === Number(menuId));
-      if (foundMenu) {
-        setMenu(foundMenu);
-      }
-    }
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-    const storedCategories = localStorage.getItem(`categories_${menuId}`);
-    if (storedCategories) {
-      const categories = JSON.parse(storedCategories);
-      const foundCategory = categories.find((c) => c.id === Number(categoryId));
-      if (foundCategory) {
-        setCategory(foundCategory);
-      }
-    }
+        const menuData = await menuAPI.getMenu(Number(menuId));
+        setMenu(menuData);
 
-    const storedItems = localStorage.getItem(`items_${categoryId}`);
-    if (storedItems) {
-      const items = JSON.parse(storedItems);
-      const foundItem = items.find((i) => i.id === Number(itemId));
-      if (foundItem) {
-        setItem(foundItem);
-        // Load saved visibility setting or default to "visible"
-        setSelectedVisibility(foundItem.visibility || "visible");
+        const categories = await menuAPI.getCategories(Number(menuId));
+        const foundCategory = categories.find((c) => c.id === Number(categoryId));
+        if (foundCategory) {
+          setCategory(foundCategory);
+        }
+
+        const items = await menuAPI.getItems(Number(menuId), Number(categoryId));
+        const foundItem = items.find((i) => i.id === Number(itemId));
+        if (foundItem) {
+          setItem(foundItem);
+          // Map isVisible to visibility string
+          setSelectedVisibility(foundItem.isVisible !== false ? "visible" : "hidden");
+        }
+      } catch (err) {
+        console.error("Error loading data:", err);
+        setError(err.message || "Failed to load data");
+      } finally {
+        setLoading(false);
       }
+    };
+
+    if (menuId && categoryId && itemId) {
+      loadData();
     }
   }, [menuId, categoryId, itemId]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!item) return;
 
-    // Update item visibility in localStorage
-    const storedItems = localStorage.getItem(`items_${categoryId}`);
-    if (storedItems) {
-      const items = JSON.parse(storedItems);
-      const updatedItems = items.map((it) =>
-        it.id === Number(itemId)
-          ? { ...it, visibility: selectedVisibility }
-          : it
-      );
-      localStorage.setItem(`items_${categoryId}`, JSON.stringify(updatedItems));
-    }
+    try {
+      setSaving(true);
+      setError("");
 
-    // Navigate back to menu detail page
-    navigate(`/owner-dashboard/menus/${menuId}`);
+      // Map visibility string to isVisible boolean
+      const isVisible = selectedVisibility === "visible";
+
+      await menuAPI.updateItem(Number(menuId), Number(categoryId), Number(itemId), {
+        name: item.name,
+        description: item.description || "",
+        price: item.price,
+        imageUrl: item.imageUrl || null,
+        isAvailable: item.isAvailable !== false,
+        isVisible: isVisible,
+        displayOrder: item.displayOrder || 0,
+        priceOptions: item.priceOptions?.map(po => ({
+          optionName: po.optionName,
+          price: po.price,
+          displayOrder: po.displayOrder || 0,
+        })) || [],
+      });
+
+      // Navigate back to menu detail page
+      navigate(`/owner-dashboard/menus/${menuId}`);
+    } catch (err) {
+      console.error("Error saving visibility:", err);
+      setError(err.message || "Failed to save visibility settings");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  if (!menu || !category || !item) {
+  if (loading || !menu || !category || !item) {
     return (
       <div className="flex items-center justify-center p-8">
-        <p className="text-sm text-slate-500">Loading...</p>
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-emerald-500 border-r-transparent"></div>
+        <span className="ml-3 text-sm text-slate-500">Loading...</span>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-800">
+          {error}
+        </div>
+      )}
+
       {/* Header with back button and breadcrumb */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -113,9 +144,10 @@ export function ItemVisibilityPage() {
         <button
           type="button"
           onClick={handleSave}
-          className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+          disabled={saving}
+          className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Save
+          {saving ? "Saving..." : "Save"}
         </button>
       </div>
 
@@ -175,6 +207,7 @@ export function ItemVisibilityPage() {
     </div>
   );
 }
+
 
 
 

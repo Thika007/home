@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   RxPlusCircled,
@@ -19,6 +19,7 @@ import {
 } from "react-icons/rx";
 import { HiEye } from "react-icons/hi2";
 import { FaQrcode, FaPrint } from "react-icons/fa";
+import { menuAPI } from "../../services/api";
 
 const MENU_PREVIEW_URL = "/menu-preview";
 
@@ -28,29 +29,11 @@ const TABS = [
   { id: "archive", label: "Archive" },
 ];
 
-// No default menus - start with empty array
-
 const INITIAL_MENU_FORM = {
   name: "",
   description: "",
   category: "",
   availability: "always",
-};
-
-// Helper function to load menus from localStorage synchronously
-const loadMenusFromStorage = () => {
-  try {
-    const storedMenus = localStorage.getItem("menus");
-    if (storedMenus) {
-      const parsedMenus = JSON.parse(storedMenus);
-      if (Array.isArray(parsedMenus)) {
-        return parsedMenus;
-      }
-    }
-  } catch (error) {
-    console.error("Error loading menus from localStorage:", error);
-  }
-  return [];
 };
 
 export function MenusPage() {
@@ -60,19 +43,33 @@ export function MenusPage() {
   };
 
   const [activeTab, setActiveTab] = useState("menus");
-  // Initialize menus directly from localStorage to avoid race condition
-  const [menus, setMenus] = useState(() => loadMenusFromStorage());
+  const [menus, setMenus] = useState([]);
   const [menuView, setMenuView] = useState("list");
   const [menuForm, setMenuForm] = useState(INITIAL_MENU_FORM);
   const [editingMenuId, setEditingMenuId] = useState(null);
   const [openCardMenuId, setOpenCardMenuId] = useState(null);
   const [duplicateTarget, setDuplicateTarget] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // Store menus in localStorage whenever they change
-  React.useEffect(() => {
-    // Save to localStorage whenever menus change
-    localStorage.setItem("menus", JSON.stringify(menus));
-  }, [menus]);
+  // Load menus from API on mount
+  useEffect(() => {
+    const loadMenus = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        const data = await menuAPI.getMenus();
+        setMenus(data);
+      } catch (err) {
+        console.error("Error loading menus:", err);
+        setError(err.message || "Failed to load menus");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMenus();
+  }, []);
 
   const isMenuListVisible = activeTab === "menus" && menuView === "list";
   const isCreateOptionsVisible =
@@ -94,84 +91,95 @@ export function MenusPage() {
     setEditingMenuId(null);
   };
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     if (!menuForm.name.trim()) {
       return;
     }
 
-    setMenus((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
+    try {
+      setError("");
+      const newMenu = await menuAPI.createMenu({
         name: menuForm.name.trim(),
-        status: "Draft",
         description: menuForm.description.trim(),
-        category: menuForm.category,
-        availability: menuForm.availability,
-      },
-    ]);
+        isActive: false, // Draft means not active
+        isDefault: false,
+      });
 
-    resetForm();
-    setOpenCardMenuId(null);
-    setMenuView("list");
+      setMenus((prev) => [...prev, newMenu]);
+      resetForm();
+      setOpenCardMenuId(null);
+      setMenuView("list");
+    } catch (err) {
+      console.error("Error creating draft menu:", err);
+      setError(err.message || "Failed to create menu");
+    }
   };
 
-  const handleCreateMenu = () => {
+  const handleCreateMenu = async () => {
     if (!menuForm.name.trim()) {
       return;
     }
 
-    const newMenu = {
-      id: Date.now(),
-      name: menuForm.name.trim(),
-      status: "Connected",
-      description: menuForm.description.trim(),
-    };
+    try {
+      setError("");
+      const newMenu = await menuAPI.createMenu({
+        name: menuForm.name.trim(),
+        description: menuForm.description.trim(),
+        isActive: true,
+        isDefault: false,
+      });
 
-    const updatedMenus = [...menus, newMenu];
-    setMenus(updatedMenus);
-    
-    // Immediately save to localStorage
-    localStorage.setItem("menus", JSON.stringify(updatedMenus));
-
-    resetForm();
-    setOpenCardMenuId(null);
-    setMenuView("list");
+      setMenus((prev) => [...prev, newMenu]);
+      resetForm();
+      setOpenCardMenuId(null);
+      setMenuView("list");
+    } catch (err) {
+      console.error("Error creating menu:", err);
+      setError(err.message || "Failed to create menu");
+    }
   };
 
-  const handleUpdateMenu = () => {
+  const handleUpdateMenu = async () => {
     if (!menuForm.name.trim() || editingMenuId === null) {
       return;
     }
 
-    const updatedMenus = menus.map((menu) =>
-      menu.id === editingMenuId
-        ? {
-            ...menu,
-            name: menuForm.name.trim(),
-            description: menuForm.description.trim(),
-          }
-        : menu
-    );
-    
-    setMenus(updatedMenus);
-    
-    // Immediately save to localStorage
-    localStorage.setItem("menus", JSON.stringify(updatedMenus));
+    try {
+      setError("");
+      const updatedMenu = await menuAPI.updateMenu(editingMenuId, {
+        name: menuForm.name.trim(),
+        description: menuForm.description.trim(),
+        isActive: true,
+        isDefault: false,
+      });
 
-    resetForm();
-    setOpenCardMenuId(null);
-    setMenuView("list");
+      setMenus((prev) =>
+        prev.map((menu) => (menu.id === editingMenuId ? updatedMenu : menu))
+      );
+
+      resetForm();
+      setOpenCardMenuId(null);
+      setMenuView("list");
+    } catch (err) {
+      console.error("Error updating menu:", err);
+      setError(err.message || "Failed to update menu");
+    }
   };
 
-  const handleDeleteMenu = (menuId) => {
-    const updatedMenus = menus.filter((menu) => menu.id !== menuId);
-    setMenus(updatedMenus);
-    
-    // Immediately save to localStorage
-    localStorage.setItem("menus", JSON.stringify(updatedMenus));
-    
-    setOpenCardMenuId(null);
+  const handleDeleteMenu = async (menuId) => {
+    if (!window.confirm("Are you sure you want to delete this menu? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      setError("");
+      await menuAPI.deleteMenu(menuId);
+      setMenus((prev) => prev.filter((menu) => menu.id !== menuId));
+      setOpenCardMenuId(null);
+    } catch (err) {
+      console.error("Error deleting menu:", err);
+      setError(err.message || "Failed to delete menu");
+    }
   };
 
   const handleDuplicateMenu = (menu) => {
@@ -179,29 +187,33 @@ export function MenusPage() {
     setOpenCardMenuId(null);
   };
 
-  const confirmDuplicateMenu = () => {
+  const confirmDuplicateMenu = async () => {
     if (!duplicateTarget) return;
 
-    const index = menus.findIndex((menu) => menu.id === duplicateTarget.id);
-    const duplicateMenu = {
-      ...duplicateTarget,
-      id: Date.now(),
-    };
+    try {
+      setError("");
+      const newMenu = await menuAPI.createMenu({
+        name: `${duplicateTarget.name} (Copy)`,
+        description: duplicateTarget.description || "",
+        isActive: duplicateTarget.isActive || false,
+        isDefault: false,
+      });
 
-    let updatedMenus;
-    if (index === -1) {
-      updatedMenus = [...menus, duplicateMenu];
-    } else {
-      updatedMenus = [...menus];
-      updatedMenus.splice(index + 1, 0, duplicateMenu);
+      const index = menus.findIndex((menu) => menu.id === duplicateTarget.id);
+      let updatedMenus;
+      if (index === -1) {
+        updatedMenus = [...menus, newMenu];
+      } else {
+        updatedMenus = [...menus];
+        updatedMenus.splice(index + 1, 0, newMenu);
+      }
+
+      setMenus(updatedMenus);
+      setDuplicateTarget(null);
+    } catch (err) {
+      console.error("Error duplicating menu:", err);
+      setError(err.message || "Failed to duplicate menu");
     }
-
-    setMenus(updatedMenus);
-    
-    // Immediately save to localStorage
-    localStorage.setItem("menus", JSON.stringify(updatedMenus));
-
-    setDuplicateTarget(null);
   };
 
   const cancelDuplicateMenu = () => {
@@ -234,6 +246,16 @@ export function MenusPage() {
     setEditingMenuId(menu.id);
     setOpenCardMenuId(null);
     setMenuView("editMenu");
+  };
+
+  // Refresh menus after operations
+  const refreshMenus = async () => {
+    try {
+      const data = await menuAPI.getMenus();
+      setMenus(data);
+    } catch (err) {
+      console.error("Error refreshing menus:", err);
+    }
   };
 
   const renderMenuDetailsFields = ({ includeTip = true } = {}) => (
@@ -360,6 +382,12 @@ export function MenusPage() {
       </header>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        {error && (
+          <div className="mb-4 rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-800">
+            {error}
+          </div>
+        )}
+
         <div className="mt-6 flex flex-wrap items-center gap-2 border-b border-slate-200">
           {TABS.map(({ id, label }) => {
             const isActive = activeTab === id;
@@ -388,25 +416,32 @@ export function MenusPage() {
 
         {isMenuListVisible && (
           <div className="mt-6 space-y-6">
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={startCreateOptions}
-                className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
-              >
-                <RxPlusCircled className="size-5" />
-                Add New
-              </button>
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 transition hover:border-emerald-500 hover:text-emerald-500"
-              >
-                <RxDashboard className="size-5" />
-                Go to store settings to connect your menu
-              </button>
-            </div>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-emerald-500 border-r-transparent"></div>
+                <span className="ml-3 text-sm text-slate-600">Loading menus...</span>
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={startCreateOptions}
+                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                  >
+                    <RxPlusCircled className="size-5" />
+                    Add New
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 transition hover:border-emerald-500 hover:text-emerald-500"
+                  >
+                    <RxDashboard className="size-5" />
+                    Go to store settings to connect your menu
+                  </button>
+                </div>
 
-            {menus.length === 0 ? (
+                {menus.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
                 <div className="mx-auto max-w-md">
                   <div className="mb-4 inline-flex size-16 items-center justify-center rounded-full bg-slate-100 text-slate-400">
@@ -429,7 +464,7 @@ export function MenusPage() {
             ) : (
               <div className="grid gap-4 lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2">
                 {menus.map((menu) => {
-                const { id, name, status } = menu;
+                const { id, name } = menu;
                 const isMenuActionsOpen = openCardMenuId === id;
 
                 return (
@@ -506,13 +541,13 @@ export function MenusPage() {
                       <span
                         className={[
                           "mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold",
-                          status === "Connected"
+                          menu.isActive
                             ? "bg-emerald-100 text-emerald-600"
                             : "bg-slate-200 text-slate-600",
                         ].join(" ")}
                       >
                         <span className="size-2 rounded-full bg-current" />
-                        {status}
+                        {menu.isActive ? "Active" : "Inactive"}
                       </span>
                     </div>
                   </article>
@@ -530,6 +565,8 @@ export function MenusPage() {
                   <span className="mt-4">Add menu</span>
                 </button>
               </div>
+            )}
+              </>
             )}
           </div>
         )}

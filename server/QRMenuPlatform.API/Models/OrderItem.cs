@@ -37,5 +37,10 @@ public class OrderItem
     
     [MaxLength(500)]
     public string? SpecialInstructions { get; set; }
+    
+    public int? PriceOptionId { get; set; }
+    
+    [MaxLength(100)]
+    public string? PriceOptionName { get; set; }
 }
 

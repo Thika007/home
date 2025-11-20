@@ -1,5 +1,6 @@
 F:\QRMenuPlatform\React\home\server\QRMenuPlatform.API\bin\Debug\net8.0\appsettings.Development.json
 F:\QRMenuPlatform\React\home\server\QRMenuPlatform.API\bin\Debug\net8.0\appsettings.json
+F:\QRMenuPlatform\React\home\server\QRMenuPlatform.API\bin\Debug\net8.0\QRMenuPlatform.API.staticwebassets.runtime.json
 F:\QRMenuPlatform\React\home\server\QRMenuPlatform.API\bin\Debug\net8.0\QRMenuPlatform.API.staticwebassets.endpoints.json
 F:\QRMenuPlatform\React\home\server\QRMenuPlatform.API\bin\Debug\net8.0\QRMenuPlatform.API.exe
 F:\QRMenuPlatform\React\home\server\QRMenuPlatform.API\bin\Debug\net8.0\QRMenuPlatform.API.deps.json
@@ -169,5 +170,4 @@ F:\QRMenuPlatform\React\home\server\QRMenuPlatform.API\obj\Debug\net8.0\refint\Q
 F:\QRMenuPlatform\React\home\server\QRMenuPlatform.API\obj\Debug\net8.0\QRMenuPlatform.API.pdb
 F:\QRMenuPlatform\React\home\server\QRMenuPlatform.API\obj\Debug\net8.0\QRMenuPlatform.API.genruntimeconfig.cache
 F:\QRMenuPlatform\React\home\server\QRMenuPlatform.API\obj\Debug\net8.0\ref\QRMenuPlatform.API.dll
-F:\QRMenuPlatform\React\home\server\QRMenuPlatform.API\bin\Debug\net8.0\QRMenuPlatform.API.staticwebassets.runtime.json
 F:\QRMenuPlatform\React\home\server\QRMenuPlatform.API\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

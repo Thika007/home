@@ -19,8 +19,10 @@ import { UserMenuRegisterPage } from "./UserMenu/pages/UserMenuRegister";
 import { UserMenuFeedbackPage } from "./UserMenu/pages/UserMenuFeedback";
 import { UserMenuMenuPage } from "./UserMenu/pages/UserMenuMenu";
 import { UserMenuCartPage } from "./UserMenu/pages/UserMenuCart";
+import { UserMenuOrderHistoryPage } from "./UserMenu/pages/UserMenuOrderHistory";
 import { CartProvider } from "./UserMenu/hooks/useCart";
 import { AuthProvider } from "./UserMenu/hooks/useAuth";
+import { NotificationProvider } from "./UserMenu/hooks/useNotifications";
 
 function HomePage() {
   return (
@@ -51,6 +53,7 @@ export default function App() {
     "/menu-feedback",
     "/menu",
     "/menu-cart",
+    "/menu-order-history",
   ];
   const shouldHideNavbar = hideNavbarRoutes.some((route) => location.pathname.startsWith(route));
 
@@ -82,9 +85,11 @@ export default function App() {
               path="/menu-preview"
               element={
                 <AuthProvider>
-                  <CartProvider>
-                    <UserMenuWelcomePage />
-                  </CartProvider>
+                  <NotificationProvider>
+                    <CartProvider>
+                      <UserMenuWelcomePage />
+                    </CartProvider>
+                  </NotificationProvider>
                 </AuthProvider>
               }
             />
@@ -92,7 +97,9 @@ export default function App() {
               path="/menu-login"
               element={
                 <AuthProvider>
-                  <UserMenuLoginPage />
+                  <NotificationProvider>
+                    <UserMenuLoginPage />
+                  </NotificationProvider>
                 </AuthProvider>
               }
             />
@@ -102,9 +109,11 @@ export default function App() {
               path="/menu"
               element={
                 <AuthProvider>
-                  <CartProvider>
-                    <UserMenuMenuPage />
-                  </CartProvider>
+                  <NotificationProvider>
+                    <CartProvider>
+                      <UserMenuMenuPage />
+                    </CartProvider>
+                  </NotificationProvider>
                 </AuthProvider>
               }
             />
@@ -112,9 +121,21 @@ export default function App() {
               path="/menu-cart"
               element={
                 <AuthProvider>
-                  <CartProvider>
-                    <UserMenuCartPage />
-                  </CartProvider>
+                  <NotificationProvider>
+                    <CartProvider>
+                      <UserMenuCartPage />
+                    </CartProvider>
+                  </NotificationProvider>
+                </AuthProvider>
+              }
+            />
+            <Route
+              path="/menu-order-history"
+              element={
+                <AuthProvider>
+                  <NotificationProvider>
+                    <UserMenuOrderHistoryPage />
+                  </NotificationProvider>
                 </AuthProvider>
               }
             />

@@ -1,4 +1,5 @@
 import React from "react";
+import { menuAPI } from "../../services/api";
 
 const currencyFormatter = new Intl.NumberFormat("en-LK", {
   style: "currency",
@@ -109,132 +110,179 @@ function formatPriceDisplay(item) {
   return "Price on request";
 }
 
-function loadAllMenus() {
+// Helper to get restaurant ID from logged-in user, URL params, or localStorage
+function getRestaurantId() {
   if (typeof window === "undefined") {
-    return [];
+    return null;
   }
 
+  // Priority 1: Get from logged-in owner's user data
   try {
-    const menusRaw = localStorage.getItem("menus");
-    if (!menusRaw) {
-      return [];
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      if (user.role === "Owner" && user.restaurantId) {
+        return parseInt(user.restaurantId, 10);
+      }
     }
-
-    const menus = JSON.parse(menusRaw);
-    if (!Array.isArray(menus) || menus.length === 0) {
-      return [];
-    }
-
-    return menus;
   } catch (error) {
-    console.warn("Failed to load menus", error);
-    return [];
-  }
-}
-
-function loadMenuFromStorage(menuId = null) {
-  if (typeof window === "undefined") {
-    return buildFallbackMenu();
+    console.warn("Failed to parse user data:", error);
   }
 
-  try {
-    const menusRaw = localStorage.getItem("menus");
-    if (!menusRaw) {
-      return buildFallbackMenu();
-    }
-
-    const menus = JSON.parse(menusRaw);
-    if (!Array.isArray(menus) || menus.length === 0) {
-      return buildFallbackMenu();
-    }
-
-    let selectedMenu;
-    if (menuId) {
-      selectedMenu = menus.find((menu) => menu.id === menuId || String(menu.id) === String(menuId));
-    } else {
-      selectedMenu =
-        menus.find((menu) => menu.isPublished || menu.isPublic) ??
-        menus.find((menu) => menu.status === "published") ??
-        menus[0];
-    }
-
-    if (!selectedMenu) {
-      return buildFallbackMenu();
-    }
-
-    const categoriesRaw = localStorage.getItem(`categories_${selectedMenu.id}`);
-    const categories = categoriesRaw ? JSON.parse(categoriesRaw) : [];
-
-    const hydratedCategories = categories.map((category) => {
-      const itemsRaw = localStorage.getItem(`items_${category.id}`);
-      const items = itemsRaw ? JSON.parse(itemsRaw) : [];
-
-      const visibleItems = items.filter((item) => item.visibility !== "hidden");
-
-      return {
-        id: category.id,
-        name: category.name || "Untitled category",
-        description: category.description || "",
-        items: visibleItems.map((item) => ({
-          id: item.id,
-          name: item.name || "Untitled item",
-          description: item.description || "No description provided yet.",
-          priceDisplay: formatPriceDisplay(item),
-        })),
-      };
-    });
-
-    const nonEmptyCategories = hydratedCategories.filter((category) => category.items.length > 0);
-
-    if (nonEmptyCategories.length === 0) {
-      return buildFallbackMenu({ menuName: selectedMenu.name || FALLBACK_MENU_TEMPLATE.menuName });
-    }
-
-    return {
-      menuId: selectedMenu.id,
-      menuName: selectedMenu.name || FALLBACK_MENU_TEMPLATE.menuName,
-      categories: nonEmptyCategories,
-      hasLiveData: true,
-    };
-  } catch (error) {
-    console.warn("Failed to load menu data", error);
-    return buildFallbackMenu();
+  // Priority 2: Try to get from URL params
+  const urlParams = new URLSearchParams(window.location.search);
+  const restaurantIdParam = urlParams.get("restaurantId");
+  if (restaurantIdParam) {
+    return parseInt(restaurantIdParam, 10);
   }
+
+  // Priority 3: Try localStorage (for backward compatibility)
+  const stored = localStorage.getItem("restaurantId");
+  if (stored) {
+    return parseInt(stored, 10);
+  }
+
+  // No restaurant ID found - return null instead of defaulting to 1
+  // This will show fallback menu instead of wrong restaurant's menu
+  return null;
 }
 
 export function usePublicMenuData(menuId = null) {
-  const [menuData, setMenuData] = React.useState(() => loadMenuFromStorage(menuId));
+  const [menuData, setMenuData] = React.useState(() => buildFallbackMenu());
+  const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    setMenuData(loadMenuFromStorage(menuId));
-  }, [menuId]);
+    const loadMenuData = async () => {
+      try {
+        setLoading(true);
+        
+        // Get restaurant ID from URL params or localStorage
+        const restaurantId = getRestaurantId();
 
-  React.useEffect(() => {
-    const handleStorage = (event) => {
-      if (!event.key || event.key === "menus" || event.key.startsWith("categories_") || event.key.startsWith("items_")) {
-        setMenuData(loadMenuFromStorage(menuId));
+        if (!restaurantId) {
+          setMenuData(buildFallbackMenu());
+          setLoading(false);
+          return;
+        }
+
+        // Fetch public menus from API
+        const publicMenus = await menuAPI.getPublicMenu(restaurantId);
+
+        if (!publicMenus || publicMenus.length === 0) {
+          setMenuData(buildFallbackMenu());
+          setLoading(false);
+          return;
+        }
+
+        // Select menu based on menuId or use first active menu
+        let selectedMenu;
+        if (menuId) {
+          selectedMenu = publicMenus.find((menu) => menu.id === Number(menuId));
+        } else {
+          // Use first menu (they're already ordered by IsDefault)
+          selectedMenu = publicMenus[0];
+        }
+
+        if (!selectedMenu) {
+          setMenuData(buildFallbackMenu());
+          setLoading(false);
+          return;
+        }
+
+        // Transform API response to expected format
+        const transformedCategories = selectedMenu.categories.map((category) => ({
+          id: category.id,
+          name: category.name || "Untitled category",
+          description: category.description || "",
+          items: category.items.map((item) => ({
+            id: item.id,
+            name: item.name || "Untitled item",
+            description: item.description || "No description provided yet.",
+            priceDisplay: formatPriceDisplay(item),
+            price: item.price,
+            priceOptions: item.priceOptions,
+            imageUrl: item.imageUrl,
+            image: item.imageUrl, // For backward compatibility
+            labels: item.labels,
+            displayOn: item.displayOn || [],
+            size: item.size,
+            unit: item.unit,
+            preparationTime: item.preparationTime,
+            featured: item.featured || false,
+            recommended: item.recommended,
+            markAsSoldOut: item.markAsSoldOut || false,
+            isAvailable: item.isAvailable !== false,
+          })),
+        }));
+
+        const nonEmptyCategories = transformedCategories.filter((category) => category.items.length > 0);
+
+        if (nonEmptyCategories.length === 0) {
+          setMenuData(buildFallbackMenu({ menuName: selectedMenu.name || FALLBACK_MENU_TEMPLATE.menuName }));
+        } else {
+          setMenuData({
+            menuId: selectedMenu.id,
+            menuName: selectedMenu.name || FALLBACK_MENU_TEMPLATE.menuName,
+            categories: nonEmptyCategories,
+            hasLiveData: true,
+          });
+        }
+      } catch (error) {
+        console.warn("Failed to load menu data from API:", error);
+        setMenuData(buildFallbackMenu());
+      } finally {
+        setLoading(false);
       }
     };
 
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+    loadMenuData();
   }, [menuId]);
 
   return menuData;
 }
 
 export function useAllMenus() {
-  const [menus, setMenus] = React.useState(() => loadAllMenus());
+  const [menus, setMenus] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    const handleStorage = (event) => {
-      if (!event.key || event.key === "menus") {
-        setMenus(loadAllMenus());
+    const loadMenus = async () => {
+      try {
+        setLoading(true);
+        
+        // Get restaurant ID from URL params or localStorage
+        const restaurantId = getRestaurantId();
+
+        if (!restaurantId) {
+          setMenus([]);
+          setLoading(false);
+          return;
+        }
+
+        // Fetch public menus from API
+        const publicMenus = await menuAPI.getPublicMenu(restaurantId);
+
+        // Transform to expected format
+        const transformedMenus = (publicMenus || []).map((menu) => ({
+          id: menu.id,
+          name: menu.name,
+          description: menu.description || "",
+          isActive: true,
+          isPublished: true,
+          isPublic: true,
+          status: "published",
+        }));
+
+        setMenus(transformedMenus);
+      } catch (error) {
+        console.warn("Failed to load menus from API:", error);
+        setMenus([]);
+      } finally {
+        setLoading(false);
       }
     };
 
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+    loadMenus();
   }, []);
 
   return menus;

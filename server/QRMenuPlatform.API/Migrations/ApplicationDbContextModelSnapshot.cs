@@ -239,10 +239,21 @@ namespace QRMenuPlatform.API.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
+                    b.Property<string>("DisplayOn")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("int");
 
+                    b.Property<bool>("Featured")
+                        .HasColumnType("bit");
+
                     b.Property<string>("ImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("IngredientWarnings")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
@@ -252,13 +263,40 @@ namespace QRMenuPlatform.API.Migrations
                     b.Property<bool>("IsVisible")
                         .HasColumnType("bit");
 
+                    b.Property<string>("Labels")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("MarkAsSoldOut")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<string>("PreparationTime")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Recommended")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Size")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("TaxCategories")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Unit")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -268,6 +306,61 @@ namespace QRMenuPlatform.API.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("MenuItems");
+                });
+
+            modelBuilder.Entity("QRMenuPlatform.API.Models.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("GuestIdentifier")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RestaurantId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsRead");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("RestaurantId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("QRMenuPlatform.API.Models.OperatingHour", b =>
@@ -326,6 +419,17 @@ namespace QRMenuPlatform.API.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<string>("GuestEmail")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("GuestName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("NumberOfPassengers")
+                        .HasColumnType("int");
+
                     b.Property<string>("OrderId")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -350,6 +454,10 @@ namespace QRMenuPlatform.API.Migrations
 
                     b.Property<decimal>("Subtotal")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("TableNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<decimal>("TipAmount")
                         .HasColumnType("decimal(18,2)");
@@ -390,6 +498,13 @@ namespace QRMenuPlatform.API.Migrations
 
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
+
+                    b.Property<int?>("PriceOptionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PriceOptionName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
@@ -741,6 +856,31 @@ namespace QRMenuPlatform.API.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("QRMenuPlatform.API.Models.Notification", b =>
+                {
+                    b.HasOne("QRMenuPlatform.API.Models.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("QRMenuPlatform.API.Models.Restaurant", "Restaurant")
+                        .WithMany()
+                        .HasForeignKey("RestaurantId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("QRMenuPlatform.API.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Restaurant");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("QRMenuPlatform.API.Models.OperatingHour", b =>

@@ -173,8 +173,30 @@ export function UserMenuMenuPage() {
                     key={item.id || item.name}
                     className="flex flex-col gap-3 rounded-3xl bg-white p-4 shadow transition hover:-translate-y-1"
                   >
-                    <div className="flex h-40 items-center justify-center rounded-2xl bg-slate-100 text-4xl">
-                      🍽️
+                    <div className="relative h-40 w-full overflow-hidden rounded-2xl bg-slate-100">
+                      {item.image || item.imageUrl ? (
+                        <img
+                          src={item.image || item.imageUrl}
+                          alt={item.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-4xl">
+                          🍽️
+                        </div>
+                      )}
+                      {item.featured && (
+                        <div className="absolute top-2 right-2 rounded-full bg-emerald-500 px-2 py-1 text-xs font-semibold text-white">
+                          FEATURED
+                        </div>
+                      )}
+                      {item.markAsSoldOut && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl">
+                          <span className="rounded-full bg-rose-500 px-4 py-2 text-sm font-semibold text-white">
+                            SOLD OUT
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-slate-900">{item.name}</h3>

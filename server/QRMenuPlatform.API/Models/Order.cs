@@ -47,6 +47,17 @@ public class Order
     [MaxLength(500)]
     public string? SpecialInstructions { get; set; }
     
+    [MaxLength(50)]
+    public string? TableNumber { get; set; }
+    
+    public int? NumberOfPassengers { get; set; }
+    
+    [MaxLength(100)]
+    public string? GuestName { get; set; }
+    
+    [MaxLength(100)]
+    public string? GuestEmail { get; set; }
+    
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     public DateTime? ConfirmedAt { get; set; }

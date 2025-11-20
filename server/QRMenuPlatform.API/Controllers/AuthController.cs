@@ -138,11 +138,110 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Registration submitted successfully! Your registration is pending admin approval. You will be notified once approved." });
     }
 
+    [HttpPost("register-customer")]
+    public async Task<IActionResult> RegisterCustomer([FromBody] RegisterCustomerRequest request)
+    {
+        // Check if email exists
+        if (await _context.Users.AnyAsync(u => u.Email == request.Email))
+        {
+            return BadRequest(new { message = "Email already registered" });
+        }
+
+        // Create user
+        var user = new User
+        {
+            Email = request.Email,
+            PasswordHash = PasswordHasher.HashPassword(request.Password),
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            Phone = request.Phone,
+            Role = "Customer",
+            IsEmailVerified = false,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        // Create customer
+        var customer = new Customer
+        {
+            UserId = user.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync();
+
+        // Generate email verification token
+        var token = Guid.NewGuid().ToString();
+        var emailVerification = new EmailVerification
+        {
+            UserId = user.Id,
+            Token = token,
+            ExpiresAt = DateTime.UtcNow.AddDays(1),
+            IsUsed = false
+        };
+
+        _context.EmailVerifications.Add(emailVerification);
+        await _context.SaveChangesAsync();
+
+        // Send verification email
+        try
+        {
+            await _emailService.SendVerificationEmailAsync(user.Email, token, user.FirstName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send verification email");
+            // Continue even if email fails
+        }
+
+        // Automatically log in the user after registration
+        // Create claims
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}"),
+            new Claim(ClaimTypes.Role, user.Role)
+        };
+
+        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var authProperties = new AuthenticationProperties
+        {
+            IsPersistent = true,
+            ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+        };
+
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(claimsIdentity),
+            authProperties);
+
+        // Return LoginResponse for frontend
+        var response = new LoginResponse
+        {
+            UserId = user.Id,
+            Email = user.Email,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Role = user.Role,
+            IsEmailVerified = user.IsEmailVerified,
+            IsApproved = false, // Customers don't need approval
+            RestaurantId = null // Customers don't have restaurants
+        };
+
+        return Ok(response);
+    }
+
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var user = await _context.Users
             .Include(u => u.RestaurantOwner)
+                .ThenInclude(ro => ro.Restaurant)
             .FirstOrDefaultAsync(u => u.Email == request.Email);
 
         if (user == null || !PasswordHasher.VerifyPassword(request.Password, user.PasswordHash))
@@ -181,6 +280,13 @@ public class AuthController : ControllerBase
             new ClaimsPrincipal(claimsIdentity),
             authProperties);
 
+        // Get restaurant ID for owners
+        int? restaurantId = null;
+        if (user.Role == "Owner" && user.RestaurantOwner?.Restaurant != null)
+        {
+            restaurantId = user.RestaurantOwner.Restaurant.Id;
+        }
+
         var response = new LoginResponse
         {
             UserId = user.Id,
@@ -189,7 +295,8 @@ public class AuthController : ControllerBase
             LastName = user.LastName,
             Role = user.Role,
             IsEmailVerified = user.IsEmailVerified,
-            IsApproved = user.RestaurantOwner?.IsApproved ?? false
+            IsApproved = user.RestaurantOwner?.IsApproved ?? false,
+            RestaurantId = restaurantId
         };
 
         return Ok(response);
@@ -218,11 +325,19 @@ public class AuthController : ControllerBase
 
         var user = await _context.Users
             .Include(u => u.RestaurantOwner)
+                .ThenInclude(ro => ro.Restaurant)
             .FirstOrDefaultAsync(u => u.Id == userId);
 
         if (user == null)
         {
             return Unauthorized();
+        }
+
+        // Get restaurant ID for owners
+        int? restaurantId = null;
+        if (user.Role == "Owner" && user.RestaurantOwner?.Restaurant != null)
+        {
+            restaurantId = user.RestaurantOwner.Restaurant.Id;
         }
 
         var response = new LoginResponse
@@ -234,7 +349,8 @@ public class AuthController : ControllerBase
             Role = user.Role,
             IsEmailVerified = user.IsEmailVerified,
             IsApproved = user.RestaurantOwner?.IsApproved ?? false,
-            ProfilePictureUrl = user.RestaurantOwner?.ProfilePictureUrl
+            ProfilePictureUrl = user.RestaurantOwner?.ProfilePictureUrl,
+            RestaurantId = restaurantId
         };
 
         return Ok(response);

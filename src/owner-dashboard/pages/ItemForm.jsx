@@ -8,6 +8,10 @@ import {
   RxGrid,
 } from "react-icons/rx";
 import { HiCurrencyDollar } from "react-icons/hi2";
+import { menuAPI } from "../../services/api";
+
+const API_BASE_URL = "http://localhost:5000/api";
+const STATIC_BASE_URL = "http://localhost:5000";
 
 export function ItemFormPage() {
   const { menuId, categoryId, itemId } = useParams();
@@ -34,6 +38,12 @@ export function ItemFormPage() {
     images: [],
   });
   const [displayOnDropdownOpen, setDisplayOnDropdownOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [itemImage, setItemImage] = useState(null); // stores current image (URL string or File object)
+  const [imagePreview, setImagePreview] = useState(null); // stores preview URL for display
+  const [uploadingImage, setUploadingImage] = useState(false); // loading state for upload
   const isEditMode = !!itemId;
 
   const displayOnOptions = [
@@ -44,62 +54,77 @@ export function ItemFormPage() {
     { id: 1, name: "", price: "" },
   ]);
 
-  // Load menu, category, and item data from localStorage
+  // Load menu, category, and item data from API
   useEffect(() => {
-    const storedMenus = localStorage.getItem("menus");
-    if (storedMenus) {
-      const menus = JSON.parse(storedMenus);
-      const foundMenu = menus.find((m) => m.id === Number(menuId));
-      if (foundMenu) {
-        setMenu(foundMenu);
-      }
-    }
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-    const storedCategories = localStorage.getItem(`categories_${menuId}`);
-    if (storedCategories) {
-      const categories = JSON.parse(storedCategories);
-      const foundCategory = categories.find((c) => c.id === Number(categoryId));
-      if (foundCategory) {
-        setCategory(foundCategory);
-      }
-    }
+        // Load menu
+        const menuData = await menuAPI.getMenu(Number(menuId));
+        setMenu(menuData);
 
-    // If editing, load item data
-    if (itemId) {
-      const storedItems = localStorage.getItem(`items_${categoryId}`);
-      if (storedItems) {
-        const items = JSON.parse(storedItems);
-        const foundItem = items.find((i) => i.id === Number(itemId));
-        if (foundItem) {
-          setItem(foundItem);
-          setFormData({
-            name: foundItem.name || "",
-            description: foundItem.description || "",
-            labels: foundItem.labels || "",
-            displayOn: foundItem.displayOn || [],
-            size: foundItem.size || "",
-            unit: foundItem.unit || "",
-            preparationTime: foundItem.preparationTime || "",
-            ingredientWarnings: foundItem.ingredientWarnings || "",
-            taxCategories: foundItem.taxCategories || "",
-            markAsSoldOut: foundItem.markAsSoldOut || false,
-            availability: foundItem.availability !== undefined ? foundItem.availability : true,
-            featured: foundItem.featured || false,
-            recommended: foundItem.recommended || "",
-            images: foundItem.images || [],
-          });
-          // Load price options
-          if (foundItem.priceOptions && foundItem.priceOptions.length > 0) {
-            setPriceOptions(
-              foundItem.priceOptions.map((opt, idx) => ({
-                id: idx + 1,
-                name: opt.name || "",
-                price: opt.price?.toString() || "",
-              }))
-            );
+        // Load category
+        const categories = await menuAPI.getCategories(Number(menuId));
+        const foundCategory = categories.find((c) => c.id === Number(categoryId));
+        if (foundCategory) {
+          setCategory(foundCategory);
+        }
+
+        // If editing, load item data
+        if (itemId) {
+          const items = await menuAPI.getItems(Number(menuId), Number(categoryId));
+          const foundItem = items.find((i) => i.id === Number(itemId));
+          if (foundItem) {
+            setItem(foundItem);
+            // Load existing image if available
+            const imageUrl = foundItem.imageUrl || null;
+            setItemImage(imageUrl);
+            setImagePreview(imageUrl);
+            setFormData({
+              name: foundItem.name || "",
+              description: foundItem.description || "",
+              labels: foundItem.labels || "",
+              displayOn: foundItem.displayOn || [],
+              size: foundItem.size || "",
+              unit: foundItem.unit || "",
+              preparationTime: foundItem.preparationTime || "",
+              ingredientWarnings: foundItem.ingredientWarnings || "",
+              taxCategories: foundItem.taxCategories || "",
+              markAsSoldOut: foundItem.markAsSoldOut || false,
+              availability: foundItem.isAvailable !== false,
+              featured: foundItem.featured || false,
+              recommended: foundItem.recommended || "",
+              images: [],
+            });
+            // Load price options
+            if (foundItem.priceOptions && foundItem.priceOptions.length > 0) {
+              setPriceOptions(
+                foundItem.priceOptions.map((opt, idx) => ({
+                  id: idx + 1,
+                  name: opt.optionName || "",
+                  price: opt.price?.toString() || "",
+                }))
+              );
+            } else {
+              // If no price options, use the base price
+              setPriceOptions([
+                { id: 1, name: "", price: foundItem.price?.toString() || "" },
+              ]);
+            }
           }
         }
+      } catch (err) {
+        console.error("Error loading data:", err);
+        setError(err.message || "Failed to load data");
+      } finally {
+        setLoading(false);
       }
+    };
+
+    if (menuId && categoryId) {
+      loadData();
     }
   }, [menuId, categoryId, itemId]);
 
@@ -162,19 +187,64 @@ export function ItemFormPage() {
     }
   };
 
-  const handleSave = () => {
+  const handleImageUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setError("Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image.");
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError("File size exceeds 5MB limit.");
+      return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+
+    // If editing existing item, upload immediately
+    if (isEditMode && itemId) {
+      try {
+        setUploadingImage(true);
+        setError("");
+        const result = await menuAPI.uploadItemImage(Number(menuId), Number(categoryId), Number(itemId), file);
+        setItemImage(result.imageUrl);
+        setImagePreview(result.imageUrl);
+      } catch (err) {
+        console.error("Error uploading image:", err);
+        setError(err.message || "Failed to upload image");
+        setImagePreview(null);
+      } finally {
+        setUploadingImage(false);
+      }
+    } else {
+      // For new items, store file to upload when saving
+      setItemImage(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setItemImage(null);
+    setImagePreview(null);
+  };
+
+  const handleSave = async () => {
     if (!formData.name.trim()) {
-      alert("Please enter item name.");
+      setError("Please enter item name.");
       return;
     }
 
     if (!formData.description.trim()) {
-      alert("Please enter item description.");
-      return;
-    }
-
-    if (formData.displayOn.length === 0) {
-      alert("Please select at least one 'Display on' option.");
+      setError("Please enter item description.");
       return;
     }
 
@@ -183,62 +253,90 @@ export function ItemFormPage() {
       (option) => option.price && option.price.trim() !== ""
     );
     if (validPriceOptions.length === 0) {
-      alert("Please add at least one price option with a price.");
+      setError("Please add at least one price option with a price.");
       return;
     }
 
-    // Load existing items from localStorage
-    const storedItems = localStorage.getItem(`items_${categoryId}`);
-    const items = storedItems ? JSON.parse(storedItems) : [];
+    // Get base price from first price option
+    const basePrice = parseFloat(validPriceOptions[0].price) || 0;
 
-    if (isEditMode && item) {
-      // Update existing item
-      const updatedItems = items.map((it) =>
-        it.id === Number(itemId)
-          ? {
-              ...it,
-              ...formData,
-              priceOptions: validPriceOptions.map((opt) => ({
-                name: opt.name.trim() || "",
-                price: parseFloat(opt.price) || 0,
-              })),
-              updatedAt: new Date().toISOString(),
-            }
-          : it
-      );
-      localStorage.setItem(`items_${categoryId}`, JSON.stringify(updatedItems));
-    } else {
-      // Create new item
-      const newItem = {
-        id: Date.now(),
-        ...formData,
-        priceOptions: validPriceOptions.map((opt) => ({
-          name: opt.name.trim() || "",
+    try {
+      setSaving(true);
+      setError("");
+
+      // Get existing image URL or null
+      let imageUrl = typeof itemImage === 'string' ? itemImage : (item?.imageUrl || null);
+
+      const itemData = {
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        price: basePrice,
+        imageUrl: imageUrl,
+        isAvailable: formData.availability && !formData.markAsSoldOut,
+        isVisible: true,
+        displayOrder: item?.displayOrder || 0,
+        labels: formData.labels || null,
+        displayOn: formData.displayOn || [],
+        size: formData.size || null,
+        unit: formData.unit || null,
+        preparationTime: formData.preparationTime || null,
+        featured: formData.featured || false,
+        recommended: formData.recommended || null,
+        markAsSoldOut: formData.markAsSoldOut || false,
+        priceOptions: validPriceOptions.map((opt, idx) => ({
+          optionName: opt.name.trim() || (idx === 0 ? "Default" : `Option ${idx + 1}`),
           price: parseFloat(opt.price) || 0,
+          displayOrder: idx,
         })),
-        categoryId: Number(categoryId),
-        menuId: Number(menuId),
-        visibility: "visible", // Default visibility
-        createdAt: new Date().toISOString(),
       };
 
-      // Add to items array
-      const updatedItems = [...items, newItem];
-      localStorage.setItem(`items_${categoryId}`, JSON.stringify(updatedItems));
-    }
+      if (isEditMode && itemId) {
+        // Update existing item
+        await menuAPI.updateItem(Number(menuId), Number(categoryId), Number(itemId), itemData);
+        
+        // If there's a new image file for existing item, upload it
+        if (itemImage instanceof File) {
+          const uploadResult = await menuAPI.uploadItemImage(Number(menuId), Number(categoryId), Number(itemId), itemImage);
+          // Update again with new image URL
+          await menuAPI.updateItem(Number(menuId), Number(categoryId), Number(itemId), {
+            ...itemData,
+            imageUrl: uploadResult.imageUrl,
+          });
+        }
+      } else {
+        // Create new item
+        const newItem = await menuAPI.createItem(Number(menuId), Number(categoryId), itemData);
+        
+        // Upload image after item creation
+        if (itemImage instanceof File) {
+          const uploadResult = await menuAPI.uploadItemImage(Number(menuId), Number(categoryId), newItem.id, itemImage);
+          // Update item with image URL
+          await menuAPI.updateItem(Number(menuId), Number(categoryId), newItem.id, {
+            ...itemData,
+            imageUrl: uploadResult.imageUrl,
+          });
+        }
+      }
 
-    // Navigate back to menu detail page
-    const returnCategoryId = location.state?.returnCategoryId || categoryId;
-    navigate(`/owner-dashboard/menus/${menuId}`, {
-      state: { selectedCategoryId: Number(returnCategoryId) },
-      replace: true,
-    });
+      // Navigate back to menu detail page
+      const returnCategoryId = location.state?.returnCategoryId || categoryId;
+      navigate(`/owner-dashboard/menus/${menuId}`, {
+        state: { selectedCategoryId: Number(returnCategoryId) },
+        replace: true,
+      });
+    } catch (err) {
+      console.error("Error saving item:", err);
+      setError(err.message || "Failed to save item");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  if (!menu || !category) {
+  if (loading || !menu || !category) {
     return (
       <div className="flex items-center justify-center p-8">
-        <p className="text-sm text-slate-500">Loading...</p>
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-emerald-500 border-r-transparent"></div>
+        <span className="ml-3 text-sm text-slate-500">Loading...</span>
       </div>
     );
   }
@@ -252,6 +350,12 @@ export function ItemFormPage() {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-800">
+          {error}
+        </div>
+      )}
+
       {/* Header with back button and breadcrumb */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -283,9 +387,10 @@ export function ItemFormPage() {
         <button
           type="button"
           onClick={handleSave}
-          className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+          disabled={saving}
+          className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Save
+          {saving ? "Saving..." : "Save"}
         </button>
       </div>
 
@@ -635,9 +740,43 @@ export function ItemFormPage() {
 
               {/* Images Upload */}
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-700">Images</label>
-                <div className="rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-12 text-center">
-                  <div className="mx-auto max-w-md">
+                <label className="text-sm font-semibold text-slate-700">Image</label>
+                {imagePreview || (itemImage && typeof itemImage === 'string') ? (
+                  <div className="relative">
+                    <img
+                      src={
+                        imagePreview 
+                          ? (imagePreview.startsWith('data:') ? imagePreview : `${STATIC_BASE_URL}${imagePreview}`)
+                          : (typeof itemImage === 'string' 
+                              ? `${STATIC_BASE_URL}${itemImage}` 
+                              : URL.createObjectURL(itemImage))
+                      }
+                      alt="Item preview"
+                      className="h-48 w-full rounded-xl object-cover border border-slate-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="absolute top-2 right-2 rounded-full bg-rose-500 p-2 text-white transition hover:bg-rose-600"
+                      title="Remove image"
+                    >
+                      <RxTrash className="size-4" />
+                    </button>
+                    {uploadingImage && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl">
+                        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-white border-r-transparent"></div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-12 text-center transition hover:border-emerald-400 hover:bg-emerald-50">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={uploadingImage}
+                    />
                     <div className="mb-4 inline-flex size-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                       <svg
                         className="size-8"
@@ -657,10 +796,13 @@ export function ItemFormPage() {
                       Preferred size is 400px * 300px
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
-                      Drag 'n' drop some files here, or click to select files
+                      Click to select an image file
                     </p>
-                  </div>
-                </div>
+                    <p className="mt-1 text-xs text-slate-400">
+                      Max file size: 5MB (JPEG, PNG, GIF, WebP)
+                    </p>
+                  </label>
+                )}
               </div>
             </div>
           )}

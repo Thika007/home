@@ -45,6 +45,12 @@ export function OwnerDashboardApp() {
 
         // Update localStorage with current user data
         localStorage.setItem("user", JSON.stringify(user));
+        
+        // Store restaurantId for owners (used for public menu display)
+        if (user.role === "Owner" && user.restaurantId) {
+          localStorage.setItem("restaurantId", user.restaurantId.toString());
+        }
+        
         setIsAuthenticated(true);
       } catch (error) {
         console.error("Auth check failed:", error);

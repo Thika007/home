@@ -94,6 +94,22 @@
   },
   {
     "ContainingType": "QRMenuPlatform.API.Controllers.AuthController",
+    "Method": "RegisterCustomer",
+    "RelativePath": "api/Auth/register-customer",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "QRMenuPlatform.API.DTOs.RegisterCustomerRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.AuthController",
     "Method": "RegisterOwner",
     "RelativePath": "api/Auth/register-owner",
     "HttpMethod": "POST",
@@ -178,9 +194,369 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "QRMenuPlatform.API.Controllers.OrdersController",
+    "ContainingType": "QRMenuPlatform.API.Controllers.MenuController",
+    "Method": "GetMenus",
+    "RelativePath": "api/menu",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.MenuController",
+    "Method": "CreateMenu",
+    "RelativePath": "api/menu",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "QRMenuPlatform.API.DTOs.MenuRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.MenuController",
+    "Method": "GetMenu",
+    "RelativePath": "api/menu/{menuId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "menuId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.MenuController",
+    "Method": "UpdateMenu",
+    "RelativePath": "api/menu/{menuId}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "menuId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "QRMenuPlatform.API.DTOs.MenuRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.MenuController",
+    "Method": "DeleteMenu",
+    "RelativePath": "api/menu/{menuId}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "menuId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.MenuController",
+    "Method": "GetCategories",
+    "RelativePath": "api/menu/{menuId}/categories",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "menuId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.MenuController",
+    "Method": "CreateCategory",
+    "RelativePath": "api/menu/{menuId}/categories",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "menuId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "QRMenuPlatform.API.DTOs.CategoryRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.MenuController",
+    "Method": "UpdateCategory",
+    "RelativePath": "api/menu/{menuId}/categories/{categoryId}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "menuId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "categoryId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "QRMenuPlatform.API.DTOs.CategoryRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.MenuController",
+    "Method": "DeleteCategory",
+    "RelativePath": "api/menu/{menuId}/categories/{categoryId}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "menuId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "categoryId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.MenuController",
+    "Method": "GetItems",
+    "RelativePath": "api/menu/{menuId}/categories/{categoryId}/items",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "menuId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "categoryId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.MenuController",
+    "Method": "CreateItem",
+    "RelativePath": "api/menu/{menuId}/categories/{categoryId}/items",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "menuId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "categoryId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "QRMenuPlatform.API.DTOs.MenuItemRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.MenuController",
+    "Method": "UpdateItem",
+    "RelativePath": "api/menu/{menuId}/categories/{categoryId}/items/{itemId}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "menuId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "categoryId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "itemId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "QRMenuPlatform.API.DTOs.MenuItemRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.MenuController",
+    "Method": "DeleteItem",
+    "RelativePath": "api/menu/{menuId}/categories/{categoryId}/items/{itemId}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "menuId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "categoryId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "itemId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.MenuController",
+    "Method": "UploadItemImage",
+    "RelativePath": "api/menu/{menuId}/categories/{categoryId}/items/{itemId}/upload-image",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "menuId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "categoryId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "itemId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "file",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.MenuController",
+    "Method": "GetPublicMenu",
+    "RelativePath": "api/menu/public/{restaurantId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "restaurantId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.NotificationController",
+    "Method": "GetNotifications",
+    "RelativePath": "api/notifications",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.NotificationController",
+    "Method": "MarkAsRead",
+    "RelativePath": "api/notifications/{id}/read",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.NotificationController",
+    "Method": "MarkAllAsRead",
+    "RelativePath": "api/notifications/read-all",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.NotificationController",
+    "Method": "GetUnreadCount",
+    "RelativePath": "api/notifications/unread-count",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.OrderController",
     "Method": "CreateOrder",
-    "RelativePath": "api/Orders",
+    "RelativePath": "api/orders",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
@@ -194,9 +570,19 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "QRMenuPlatform.API.Controllers.OrdersController",
+    "ContainingType": "QRMenuPlatform.API.Controllers.OrderController",
+    "Method": "GetUserOrders",
+    "RelativePath": "api/orders",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "QRMenuPlatform.API.Controllers.OrderController",
     "Method": "GetOrder",
-    "RelativePath": "api/Orders/{id}",
+    "RelativePath": "api/orders/{id}",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
@@ -210,9 +596,9 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "QRMenuPlatform.API.Controllers.OrdersController",
+    "ContainingType": "QRMenuPlatform.API.Controllers.OrderController",
     "Method": "UpdateOrderStatus",
-    "RelativePath": "api/Orders/{id}/status",
+    "RelativePath": "api/orders/{id}/status",
     "HttpMethod": "PUT",
     "IsController": true,
     "Order": 0,
@@ -231,9 +617,9 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "QRMenuPlatform.API.Controllers.OrdersController",
+    "ContainingType": "QRMenuPlatform.API.Controllers.OrderController",
     "Method": "GetRestaurantOrders",
-    "RelativePath": "api/Orders/restaurant/{restaurantId}",
+    "RelativePath": "api/orders/restaurant/{restaurantId}",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,

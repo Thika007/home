@@ -36,6 +36,37 @@
         }
       }
     },
+    "/api/Auth/register-customer": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterCustomerRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterCustomerRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterCustomerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Auth/login": {
       "post": {
         "tags": [
@@ -316,10 +347,602 @@
         }
       }
     },
-    "/api/Orders": {
+    "/api/menu": {
+      "get": {
+        "tags": [
+          "Menu"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
       "post": {
         "tags": [
-          "Orders"
+          "Menu"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MenuRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MenuRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/MenuRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/menu/{menuId}": {
+      "get": {
+        "tags": [
+          "Menu"
+        ],
+        "parameters": [
+          {
+            "name": "menuId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Menu"
+        ],
+        "parameters": [
+          {
+            "name": "menuId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MenuRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MenuRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/MenuRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Menu"
+        ],
+        "parameters": [
+          {
+            "name": "menuId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/menu/{menuId}/categories": {
+      "get": {
+        "tags": [
+          "Menu"
+        ],
+        "parameters": [
+          {
+            "name": "menuId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Menu"
+        ],
+        "parameters": [
+          {
+            "name": "menuId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/menu/{menuId}/categories/{categoryId}": {
+      "put": {
+        "tags": [
+          "Menu"
+        ],
+        "parameters": [
+          {
+            "name": "menuId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "categoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Menu"
+        ],
+        "parameters": [
+          {
+            "name": "menuId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "categoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/menu/{menuId}/categories/{categoryId}/items": {
+      "get": {
+        "tags": [
+          "Menu"
+        ],
+        "parameters": [
+          {
+            "name": "menuId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "categoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Menu"
+        ],
+        "parameters": [
+          {
+            "name": "menuId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "categoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MenuItemRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MenuItemRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/MenuItemRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/menu/{menuId}/categories/{categoryId}/items/{itemId}": {
+      "put": {
+        "tags": [
+          "Menu"
+        ],
+        "parameters": [
+          {
+            "name": "menuId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "categoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MenuItemRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MenuItemRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/MenuItemRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Menu"
+        ],
+        "parameters": [
+          {
+            "name": "menuId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "categoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/menu/public/{restaurantId}": {
+      "get": {
+        "tags": [
+          "Menu"
+        ],
+        "parameters": [
+          {
+            "name": "restaurantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/menu/{menuId}/categories/{categoryId}/items/{itemId}/upload-image": {
+      "post": {
+        "tags": [
+          "Menu"
+        ],
+        "parameters": [
+          {
+            "name": "menuId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "categoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/notifications": {
+      "get": {
+        "tags": [
+          "Notification"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/notifications/unread-count": {
+      "get": {
+        "tags": [
+          "Notification"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/notifications/{id}/read": {
+      "put": {
+        "tags": [
+          "Notification"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/notifications/read-all": {
+      "put": {
+        "tags": [
+          "Notification"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/orders": {
+      "post": {
+        "tags": [
+          "Order"
         ],
         "requestBody": {
           "content": {
@@ -345,12 +968,22 @@
             "description": "OK"
           }
         }
-      }
-    },
-    "/api/Orders/{id}": {
+      },
       "get": {
         "tags": [
-          "Orders"
+          "Order"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/orders/{id}": {
+      "get": {
+        "tags": [
+          "Order"
         ],
         "parameters": [
           {
@@ -370,10 +1003,10 @@
         }
       }
     },
-    "/api/Orders/restaurant/{restaurantId}": {
+    "/api/orders/restaurant/{restaurantId}": {
       "get": {
         "tags": [
-          "Orders"
+          "Order"
         ],
         "parameters": [
           {
@@ -393,10 +1026,10 @@
         }
       }
     },
-    "/api/Orders/{id}/status": {
+    "/api/orders/{id}/status": {
       "put": {
         "tags": [
-          "Orders"
+          "Order"
         ],
         "parameters": [
           {
@@ -725,22 +1358,47 @@
         "type": "object",
         "additionalProperties": false
       },
-      "CreateOrderRequest": {
+      "CategoryRequest": {
         "type": "object",
         "properties": {
-          "restaurantId": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "displayOrder": {
             "type": "integer",
             "format": "int32"
           },
-          "paymentMethod": {
+          "isVisible": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateOrderItemRequest": {
+        "type": "object",
+        "properties": {
+          "menuItemId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "itemName": {
             "type": "string",
             "nullable": true
           },
-          "deliveryMethod": {
-            "type": "string",
-            "nullable": true
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
           },
-          "tipAmount": {
+          "unitPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalPrice": {
             "type": "number",
             "format": "double"
           },
@@ -748,10 +1406,73 @@
             "type": "string",
             "nullable": true
           },
+          "priceOptionId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "priceOptionName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateOrderRequest": {
+        "type": "object",
+        "properties": {
+          "restaurantId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deliveryMethod": {
+            "type": "string",
+            "nullable": true
+          },
+          "tableNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "numberOfPassengers": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "paymentMethod": {
+            "type": "string",
+            "nullable": true
+          },
+          "subtotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "tipAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "specialInstructions": {
+            "type": "string",
+            "nullable": true
+          },
+          "checkoutAsGuest": {
+            "type": "boolean"
+          },
+          "guestName": {
+            "type": "string",
+            "nullable": true
+          },
+          "guestEmail": {
+            "type": "string",
+            "nullable": true
+          },
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/OrderItemRequest"
+              "$ref": "#/components/schemas/CreateOrderItemRequest"
             },
             "nullable": true
           }
@@ -772,6 +1493,98 @@
         },
         "additionalProperties": false
       },
+      "MenuItemRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "isAvailable": {
+            "type": "boolean"
+          },
+          "isVisible": {
+            "type": "boolean"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "priceOptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PriceOptionRequest"
+            },
+            "nullable": true
+          },
+          "labels": {
+            "type": "string",
+            "nullable": true
+          },
+          "displayOn": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "size": {
+            "type": "string",
+            "nullable": true
+          },
+          "unit": {
+            "type": "string",
+            "nullable": true
+          },
+          "preparationTime": {
+            "type": "string",
+            "nullable": true
+          },
+          "featured": {
+            "type": "boolean"
+          },
+          "recommended": {
+            "type": "string",
+            "nullable": true
+          },
+          "markAsSoldOut": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MenuRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "OperatingHourRequest": {
         "type": "object",
         "properties": {
@@ -785,24 +1598,6 @@
           },
           "isOpen": {
             "type": "boolean"
-          }
-        },
-        "additionalProperties": false
-      },
-      "OrderItemRequest": {
-        "type": "object",
-        "properties": {
-          "menuItemId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "quantity": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "specialInstructions": {
-            "type": "string",
-            "nullable": true
           }
         },
         "additionalProperties": false
@@ -825,6 +1620,50 @@
           },
           "enableScheduledOrders": {
             "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PriceOptionRequest": {
+        "type": "object",
+        "properties": {
+          "optionName": {
+            "type": "string",
+            "nullable": true
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RegisterCustomerRequest": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false

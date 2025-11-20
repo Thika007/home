@@ -10,6 +10,7 @@ import {
   RxTrash,
 } from "react-icons/rx";
 import { HiMagnifyingGlass, HiEye } from "react-icons/hi2";
+import { menuAPI } from "../../services/api";
 
 // Sample data - in a real app, this would come from an API
 const SAMPLE_CATEGORIES = [
@@ -71,27 +72,44 @@ export function MenuDetailPage() {
   const [copyTargetCategory, setCopyTargetCategory] = useState(null);
   const [moveTargetCategory, setMoveTargetCategory] = useState(null);
   const [makeDuplicateCopy, setMakeDuplicateCopy] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // Load menu data from localStorage
+  // Load menu data from API
   useEffect(() => {
-    const storedMenus = localStorage.getItem("menus");
-    if (storedMenus) {
-      const menus = JSON.parse(storedMenus);
-      const foundMenu = menus.find((m) => m.id === Number(menuId));
-      if (foundMenu) {
-        setMenu(foundMenu);
+    const loadMenu = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        const menuData = await menuAPI.getMenu(Number(menuId));
+        setMenu(menuData);
+      } catch (err) {
+        console.error("Error loading menu:", err);
+        setError(err.message || "Failed to load menu");
+      } finally {
+        setLoading(false);
       }
+    };
+
+    if (menuId) {
+      loadMenu();
     }
   }, [menuId]);
 
-  // Load categories from localStorage
-  // This will run when component mounts and when location changes (e.g., navigating back)
+  // Load categories from API
   useEffect(() => {
-    const storedCategories = localStorage.getItem(`categories_${menuId}`);
-    if (storedCategories) {
-      setCategories(JSON.parse(storedCategories));
-    } else {
-      setCategories([]);
+    const loadCategories = async () => {
+      try {
+        const categoriesData = await menuAPI.getCategories(Number(menuId));
+        setCategories(categoriesData || []);
+      } catch (err) {
+        console.error("Error loading categories:", err);
+        setCategories([]);
+      }
+    };
+
+    if (menuId) {
+      loadCategories();
     }
   }, [menuId]);
 
@@ -121,23 +139,24 @@ export function MenuDetailPage() {
 
   // Load items for all categories when categories change
   useEffect(() => {
-    const loadItems = () => {
+    const loadItems = async () => {
       const itemsByCategory = {};
-      categories.forEach((category) => {
-        const storedItems = localStorage.getItem(`items_${category.id}`);
-        if (storedItems) {
-          itemsByCategory[category.id] = JSON.parse(storedItems);
-        } else {
+      for (const category of categories) {
+        try {
+          const itemsData = await menuAPI.getItems(Number(menuId), category.id);
+          itemsByCategory[category.id] = itemsData || [];
+        } catch (err) {
+          console.error(`Error loading items for category ${category.id}:`, err);
           itemsByCategory[category.id] = [];
         }
-      });
+      }
       setMenuItems(itemsByCategory);
     };
 
-    if (categories.length > 0) {
+    if (categories.length > 0 && menuId) {
       loadItems();
     }
-  }, [categories, location.pathname]);
+  }, [categories, location.pathname, menuId]);
 
   // Clear selected items when category changes
   useEffect(() => {
@@ -150,10 +169,19 @@ export function MenuDetailPage() {
     item.name && item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (!menu) {
+  if (loading || !menu) {
     return (
       <div className="flex items-center justify-center p-8">
-        <p className="text-sm text-slate-500">Loading menu...</p>
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-emerald-500 border-r-transparent"></div>
+        <span className="ml-3 text-sm text-slate-500">Loading menu...</span>
+      </div>
+    );
+  }
+
+  if (error && !menu) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <p className="text-sm text-red-600">{error}</p>
       </div>
     );
   }
@@ -186,38 +214,35 @@ export function MenuDetailPage() {
     setDeleteConfirmCategory(category);
   };
 
-  const confirmDeleteCategory = () => {
-    if (!deleteConfirmCategory) return;
+  const confirmDeleteCategory = async () => {
+    if (!deleteConfirmCategory || !menuId) return;
 
-    // Remove category from localStorage
-    const storedCategories = localStorage.getItem(`categories_${menuId}`);
-    if (storedCategories) {
-      const categories = JSON.parse(storedCategories);
-      const updatedCategories = categories.filter(
-        (cat) => cat.id !== deleteConfirmCategory.id
-      );
-      localStorage.setItem(`categories_${menuId}`, JSON.stringify(updatedCategories));
-    }
-
-    // Remove items for this category
-    localStorage.removeItem(`items_${deleteConfirmCategory.id}`);
-
-    // Reload categories
-    const storedCategoriesAfter = localStorage.getItem(`categories_${menuId}`);
-    if (storedCategoriesAfter) {
-      const loadedCategories = JSON.parse(storedCategoriesAfter);
-      setCategories(loadedCategories);
-      if (loadedCategories.length > 0) {
-        setSelectedCategoryId(loadedCategories[0].id);
+    try {
+      setError("");
+      await menuAPI.deleteCategory(Number(menuId), deleteConfirmCategory.id);
+      
+      // Reload categories
+      const categoriesData = await menuAPI.getCategories(Number(menuId));
+      setCategories(categoriesData || []);
+      
+      if (categoriesData && categoriesData.length > 0) {
+        setSelectedCategoryId(categoriesData[0].id);
       } else {
         setSelectedCategoryId(null);
       }
-    } else {
-      setCategories([]);
-      setSelectedCategoryId(null);
+      
+      // Remove items from state
+      setMenuItems((prev) => {
+        const updated = { ...prev };
+        delete updated[deleteConfirmCategory.id];
+        return updated;
+      });
+      
+      setDeleteConfirmCategory(null);
+    } catch (err) {
+      console.error("Error deleting category:", err);
+      setError(err.message || "Failed to delete category");
     }
-
-    setDeleteConfirmCategory(null);
   };
 
   const cancelDeleteCategory = () => {
@@ -241,24 +266,25 @@ export function MenuDetailPage() {
     setDeleteConfirmItem({ id: item.id, isMultiple: false });
   };
 
-  const confirmDeleteItem = () => {
-    if (!deleteConfirmItem || !selectedCategoryId) return;
+  const confirmDeleteItem = async () => {
+    if (!deleteConfirmItem || !selectedCategoryId || !menuId) return;
 
-    // Remove item from localStorage
-    const storedItems = localStorage.getItem(`items_${selectedCategoryId}`);
-    if (storedItems) {
-      const items = JSON.parse(storedItems);
-      const updatedItems = items.filter((item) => item.id !== deleteConfirmItem.id);
-      localStorage.setItem(`items_${selectedCategoryId}`, JSON.stringify(updatedItems));
-
+    try {
+      setError("");
+      await menuAPI.deleteItem(Number(menuId), selectedCategoryId, deleteConfirmItem.id);
+      
       // Reload items
+      const itemsData = await menuAPI.getItems(Number(menuId), selectedCategoryId);
       setMenuItems((prev) => ({
         ...prev,
-        [selectedCategoryId]: updatedItems,
+        [selectedCategoryId]: itemsData || [],
       }));
+      
+      setDeleteConfirmItem(null);
+    } catch (err) {
+      console.error("Error deleting item:", err);
+      setError(err.message || "Failed to delete item");
     }
-
-    setDeleteConfirmItem(null);
   };
 
   const cancelDeleteItem = () => {
@@ -297,108 +323,132 @@ export function MenuDetailPage() {
     setDeleteConfirmItem({ id: selectedItems, isMultiple: true });
   };
 
-  const confirmCopyItems = () => {
-    if (!copyTargetCategory || selectedItems.length === 0) return;
+  const confirmCopyItems = async () => {
+    if (!copyTargetCategory || selectedItems.length === 0 || !menuId || !selectedCategoryId) return;
 
-    // Load source items
-    const sourceItems = localStorage.getItem(`items_${selectedCategoryId}`);
-    const items = sourceItems ? JSON.parse(sourceItems) : [];
+    try {
+      setError("");
+      const currentItems = menuItems[selectedCategoryId] || [];
+      const itemsToCopy = currentItems.filter((item) => selectedItems.includes(item.id));
 
-    // Get selected items data
-    const itemsToCopy = items.filter((item) => selectedItems.includes(item.id));
+      // Copy each item to target category
+      for (const item of itemsToCopy) {
+        const itemData = {
+          name: makeDuplicateCopy ? `${item.name} (Copy)` : item.name,
+          description: item.description || "",
+          price: item.price,
+          imageUrl: item.imageUrl || null,
+          isAvailable: item.isAvailable !== false,
+          isVisible: item.isVisible !== false,
+          displayOrder: item.displayOrder || 0,
+          priceOptions: item.priceOptions?.map(po => ({
+            optionName: po.optionName,
+            price: po.price,
+            displayOrder: po.displayOrder || 0,
+          })) || [],
+        };
+        await menuAPI.createItem(Number(menuId), copyTargetCategory, itemData);
+      }
 
-    // Load target category items
-    const targetItems = localStorage.getItem(`items_${copyTargetCategory}`);
-    const existingTargetItems = targetItems ? JSON.parse(targetItems) : [];
+      // Reload items for both categories
+      const [currentItemsData, targetItemsData] = await Promise.all([
+        menuAPI.getItems(Number(menuId), selectedCategoryId),
+        menuAPI.getItems(Number(menuId), copyTargetCategory),
+      ]);
 
-    // Copy items to target category
-    const copiedItems = itemsToCopy.map((item) => ({
-      ...item,
-      id: makeDuplicateCopy ? Date.now() + Math.random() : item.id,
-      categoryId: copyTargetCategory,
-      createdAt: new Date().toISOString(),
-    }));
-
-    const updatedTargetItems = [...existingTargetItems, ...copiedItems];
-    localStorage.setItem(`items_${copyTargetCategory}`, JSON.stringify(updatedTargetItems));
-
-    // Clear selections and close modal
-    setSelectedItems([]);
-    setShowCopyModal(false);
-    setCopyTargetCategory(null);
-
-    // Reload items for current category
-    const storedItems = localStorage.getItem(`items_${selectedCategoryId}`);
-    if (storedItems) {
-      const loadedItems = JSON.parse(storedItems);
       setMenuItems((prev) => ({
         ...prev,
-        [selectedCategoryId]: loadedItems,
+        [selectedCategoryId]: currentItemsData || [],
+        [copyTargetCategory]: targetItemsData || [],
       }));
+
+      // Clear selections and close modal
+      setSelectedItems([]);
+      setShowCopyModal(false);
+      setCopyTargetCategory(null);
+    } catch (err) {
+      console.error("Error copying items:", err);
+      setError(err.message || "Failed to copy items");
     }
   };
 
-  const confirmMoveItems = () => {
-    if (!moveTargetCategory || selectedItems.length === 0 || moveTargetCategory === selectedCategoryId) return;
+  const confirmMoveItems = async () => {
+    if (!moveTargetCategory || selectedItems.length === 0 || moveTargetCategory === selectedCategoryId || !menuId || !selectedCategoryId) return;
 
-    // Load source items
-    const sourceItems = localStorage.getItem(`items_${selectedCategoryId}`);
-    const items = sourceItems ? JSON.parse(sourceItems) : [];
+    try {
+      setError("");
+      const currentItems = menuItems[selectedCategoryId] || [];
+      const itemsToMove = currentItems.filter((item) => selectedItems.includes(item.id));
 
-    // Get items to move
-    const itemsToMove = items.filter((item) => selectedItems.includes(item.id));
-    const remainingItems = items.filter((item) => !selectedItems.includes(item.id));
+      // Move each item: create in target, delete from source
+      for (const item of itemsToMove) {
+        // Create in target category
+        const itemData = {
+          name: item.name,
+          description: item.description || "",
+          price: item.price,
+          imageUrl: item.imageUrl || null,
+          isAvailable: item.isAvailable !== false,
+          isVisible: item.isVisible !== false,
+          displayOrder: item.displayOrder || 0,
+          priceOptions: item.priceOptions?.map(po => ({
+            optionName: po.optionName,
+            price: po.price,
+            displayOrder: po.displayOrder || 0,
+          })) || [],
+        };
+        await menuAPI.createItem(Number(menuId), moveTargetCategory, itemData);
+        
+        // Delete from source category
+        await menuAPI.deleteItem(Number(menuId), selectedCategoryId, item.id);
+      }
 
-    // Load target category items
-    const targetItems = localStorage.getItem(`items_${moveTargetCategory}`);
-    const existingTargetItems = targetItems ? JSON.parse(targetItems) : [];
+      // Reload items for both categories
+      const [currentItemsData, targetItemsData] = await Promise.all([
+        menuAPI.getItems(Number(menuId), selectedCategoryId),
+        menuAPI.getItems(Number(menuId), moveTargetCategory),
+      ]);
 
-    // Move items to target category
-    const movedItems = itemsToMove.map((item) => ({
-      ...item,
-      categoryId: moveTargetCategory,
-      updatedAt: new Date().toISOString(),
-    }));
+      setMenuItems((prev) => ({
+        ...prev,
+        [selectedCategoryId]: currentItemsData || [],
+        [moveTargetCategory]: targetItemsData || [],
+      }));
 
-    // Update source category (remove items)
-    localStorage.setItem(`items_${selectedCategoryId}`, JSON.stringify(remainingItems));
-
-    // Update target category (add items)
-    const updatedTargetItems = [...existingTargetItems, ...movedItems];
-    localStorage.setItem(`items_${moveTargetCategory}`, JSON.stringify(updatedTargetItems));
-
-    // Clear selections and close modal
-    setSelectedItems([]);
-    setShowMoveModal(false);
-    setMoveTargetCategory(null);
-
-    // Reload items for current category
-    setMenuItems((prev) => ({
-      ...prev,
-      [selectedCategoryId]: remainingItems,
-    }));
+      // Clear selections and close modal
+      setSelectedItems([]);
+      setShowMoveModal(false);
+      setMoveTargetCategory(null);
+    } catch (err) {
+      console.error("Error moving items:", err);
+      setError(err.message || "Failed to move items");
+    }
   };
 
-  const handleDeleteMultipleItems = () => {
-    if (selectedItems.length === 0) return;
+  const handleDeleteMultipleItems = async () => {
+    if (selectedItems.length === 0 || !menuId || !selectedCategoryId) return;
 
-    // Load items from localStorage
-    const storedItems = localStorage.getItem(`items_${selectedCategoryId}`);
-    if (storedItems) {
-      const items = JSON.parse(storedItems);
-      const updatedItems = items.filter((item) => !selectedItems.includes(item.id));
-      localStorage.setItem(`items_${selectedCategoryId}`, JSON.stringify(updatedItems));
+    try {
+      setError("");
+      // Delete each selected item
+      for (const itemId of selectedItems) {
+        await menuAPI.deleteItem(Number(menuId), selectedCategoryId, itemId);
+      }
 
       // Reload items
+      const itemsData = await menuAPI.getItems(Number(menuId), selectedCategoryId);
       setMenuItems((prev) => ({
         ...prev,
-        [selectedCategoryId]: updatedItems,
+        [selectedCategoryId]: itemsData || [],
       }));
-    }
 
-    // Clear selections
-    setSelectedItems([]);
-    setDeleteConfirmItem(null);
+      // Clear selections
+      setSelectedItems([]);
+      setDeleteConfirmItem(null);
+    } catch (err) {
+      console.error("Error deleting items:", err);
+      setError(err.message || "Failed to delete items");
+    }
   };
 
   // Show empty state if no categories
@@ -440,6 +490,12 @@ export function MenuDetailPage() {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-800">
+          {error}
+        </div>
+      )}
+
       {/* Header with back button and menu name */}
       <div className="flex items-center gap-3">
         <button
@@ -659,9 +715,9 @@ export function MenuDetailPage() {
                       className="h-4 w-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-200"
                     />
                     <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-slate-100">
-                      {item.images && item.images.length > 0 ? (
+                      {item.imageUrl ? (
                         <img
-                          src={item.images[0]}
+                          src={`http://localhost:5000${item.imageUrl}`}
                           alt={item.name}
                           className="h-full w-full object-cover"
                         />

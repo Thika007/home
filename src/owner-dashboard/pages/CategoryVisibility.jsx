@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { RxArrowLeft, RxInfoCircled } from "react-icons/rx";
+import { menuAPI } from "../../services/api";
 
 const VISIBILITY_OPTIONS = [
   {
@@ -31,59 +32,84 @@ export function CategoryVisibilityPage() {
   const [menu, setMenu] = useState(null);
   const [category, setCategory] = useState(null);
   const [selectedVisibility, setSelectedVisibility] = useState("visible");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  // Load menu and category data from localStorage
+  // Load menu and category data from API
   useEffect(() => {
-    const storedMenus = localStorage.getItem("menus");
-    if (storedMenus) {
-      const menus = JSON.parse(storedMenus);
-      const foundMenu = menus.find((m) => m.id === Number(menuId));
-      if (foundMenu) {
-        setMenu(foundMenu);
-      }
-    }
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-    const storedCategories = localStorage.getItem(`categories_${menuId}`);
-    if (storedCategories) {
-      const categories = JSON.parse(storedCategories);
-      const foundCategory = categories.find((c) => c.id === Number(categoryId));
-      if (foundCategory) {
-        setCategory(foundCategory);
-        // Load saved visibility setting or default to "visible"
-        setSelectedVisibility(foundCategory.visibility || "visible");
+        const menuData = await menuAPI.getMenu(Number(menuId));
+        setMenu(menuData);
+
+        const categories = await menuAPI.getCategories(Number(menuId));
+        const foundCategory = categories.find((c) => c.id === Number(categoryId));
+        if (foundCategory) {
+          setCategory(foundCategory);
+          // Map isVisible to visibility string
+          setSelectedVisibility(foundCategory.isVisible !== false ? "visible" : "hidden");
+        }
+      } catch (err) {
+        console.error("Error loading data:", err);
+        setError(err.message || "Failed to load data");
+      } finally {
+        setLoading(false);
       }
+    };
+
+    if (menuId && categoryId) {
+      loadData();
     }
   }, [menuId, categoryId]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!category) return;
 
-    // Update category visibility in localStorage
-    const storedCategories = localStorage.getItem(`categories_${menuId}`);
-    if (storedCategories) {
-      const categories = JSON.parse(storedCategories);
-      const updatedCategories = categories.map((cat) =>
-        cat.id === Number(categoryId)
-          ? { ...cat, visibility: selectedVisibility }
-          : cat
-      );
-      localStorage.setItem(`categories_${menuId}`, JSON.stringify(updatedCategories));
-    }
+    try {
+      setSaving(true);
+      setError("");
 
-    // Navigate back to menu detail page
-    navigate(`/owner-dashboard/menus/${menuId}`);
+      // Map visibility string to isVisible boolean
+      const isVisible = selectedVisibility === "visible";
+
+      await menuAPI.updateCategory(Number(menuId), Number(categoryId), {
+        name: category.name,
+        description: category.description || "",
+        displayOrder: category.displayOrder || 0,
+        isVisible: isVisible,
+      });
+
+      // Navigate back to menu detail page
+      navigate(`/owner-dashboard/menus/${menuId}`);
+    } catch (err) {
+      console.error("Error saving visibility:", err);
+      setError(err.message || "Failed to save visibility settings");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  if (!menu || !category) {
+  if (loading || !menu || !category) {
     return (
       <div className="flex items-center justify-center p-8">
-        <p className="text-sm text-slate-500">Loading...</p>
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-emerald-500 border-r-transparent"></div>
+        <span className="ml-3 text-sm text-slate-500">Loading...</span>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-800">
+          {error}
+        </div>
+      )}
+
       {/* Header with back button and breadcrumb */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -103,9 +129,10 @@ export function CategoryVisibilityPage() {
         <button
           type="button"
           onClick={handleSave}
-          className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+          disabled={saving}
+          className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Save
+          {saving ? "Saving..." : "Save"}
         </button>
       </div>
 

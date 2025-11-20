@@ -1,8 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../hooks/useCart";
 import { useAuth } from "../hooks/useAuth";
+import { useRestaurantInfo } from "../hooks/useRestaurantInfo";
 import { UserMenuNavbar } from "../components/UserMenuNavbar";
+import { CheckoutModal } from "../components/CheckoutModal";
+import { orderAPI } from "../../services/api";
+import { getOrCreateGuestId } from "../utils/guestUtils";
 
 export function UserMenuCartPage() {
   const navigate = useNavigate();
@@ -20,50 +24,84 @@ export function UserMenuCartPage() {
     clearCart
   } = useCart();
   const { isAuthenticated, user } = useAuth();
+  const restaurant = useRestaurantInfo();
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCheckout = () => {
-    if (!isAuthenticated) {
-      // Store cart data and redirect to login
-      navigate("/menu-login?redirect=checkout");
+    setIsCheckoutModalOpen(true);
+  };
+
+  const handleCheckoutConfirm = async (checkoutData) => {
+    if (!restaurant.id) {
+      alert("Restaurant information not available. Please refresh the page.");
       return;
     }
 
-    // Create order
-    const order = {
-      id: `ORD-${Date.now()}`,
-      userId: user.id || user.email,
-      userName: user.name || user.email,
-      userEmail: user.email,
-      items: cartItems.map(item => ({
-        name: item.name,
-        description: item.description,
-        price: parseFloat(item.price) || parseFloat(item.priceDisplay?.replace(/[^\d.]/g, "")) || 0,
-        quantity: item.quantity || 1,
-        specialInstructions: item.specialInstructions || "",
-        image: item.image || null,
-      })),
-      subtotal,
-      tip: tipValue,
-      total: cartTotal,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-      deliveryMethod: "dine-in", // Default, can be changed
-      paymentMethod: "pending",
-    };
+    setIsSubmitting(true);
+    try {
+      // Prepare order items
+      const orderItems = cartItems.map(item => {
+        let itemPrice = 0;
+        if (item.selectedPriceOption && item.selectedPriceOption.price) {
+          itemPrice = parseFloat(item.selectedPriceOption.price) || 0;
+        } else {
+          itemPrice = parseFloat(item.price) || parseFloat(item.priceDisplay?.replace(/[^\d.]/g, "")) || 0;
+        }
 
-    // Save order to localStorage (owner dashboard will read from here)
-    const existingOrders = JSON.parse(localStorage.getItem("orders") || "[]");
-    existingOrders.push(order);
-    localStorage.setItem("orders", JSON.stringify(existingOrders));
+        return {
+          menuItemId: item.id,
+          itemName: item.name,
+          quantity: item.quantity || 1,
+          unitPrice: itemPrice,
+          totalPrice: itemPrice * (item.quantity || 1),
+          specialInstructions: item.specialInstructions || "",
+          priceOptionId: item.selectedPriceOption?.id || null,
+          priceOptionName: item.selectedPriceOption?.optionName || null,
+        };
+      });
 
-    // Clear cart
-    clearCart();
+      // Generate or get guest identifier if guest checkout
+      if (checkoutData.checkoutAsGuest) {
+        getOrCreateGuestId(); // This will set the cookie
+      }
 
-    // Show success notification
-    alert(`Order placed successfully! Order ID: ${order.id}`);
+      // Create order request
+      const orderRequest = {
+        restaurantId: restaurant.id,
+        deliveryMethod: checkoutData.orderType,
+        tableNumber: checkoutData.tableNumber,
+        numberOfPassengers: checkoutData.numberOfPassengers,
+        paymentMethod: checkoutData.paymentMethod,
+        subtotal: subtotal,
+        tipAmount: tipValue,
+        total: cartTotal,
+        specialInstructions: "",
+        checkoutAsGuest: checkoutData.checkoutAsGuest,
+        guestName: checkoutData.guestName,
+        guestEmail: checkoutData.guestEmail,
+        items: orderItems,
+      };
 
-    // Navigate back to menu
-    navigate("/menu");
+      const orderResponse = await orderAPI.createOrder(orderRequest);
+
+      // Clear cart
+      clearCart();
+
+      // Close modal
+      setIsCheckoutModalOpen(false);
+
+      // Show success message
+      alert(`Order placed successfully! Order ID: ${orderResponse.orderId}`);
+
+      // Navigate back to menu
+      navigate("/menu");
+    } catch (error) {
+      console.error("Failed to create order:", error);
+      alert(error.message || "Failed to place order. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleAddMoreItems = () => {
@@ -136,7 +174,13 @@ export function UserMenuCartPage() {
           {/* Cart Items */}
           <div className="max-h-[50vh] overflow-y-auto p-6">
             {cartItems.map((item, index) => {
-              const itemPrice = parseFloat(item.price) || parseFloat(item.priceDisplay?.replace(/[^\d.]/g, "")) || 0;
+              // Use selected price option price if available, otherwise use base price
+              let itemPrice = 0;
+              if (item.selectedPriceOption && item.selectedPriceOption.price) {
+                itemPrice = parseFloat(item.selectedPriceOption.price) || 0;
+              } else {
+                itemPrice = parseFloat(item.price) || parseFloat(item.priceDisplay?.replace(/[^\d.]/g, "")) || 0;
+              }
               return (
                 <div key={index} className="mb-4 flex items-center gap-4 border-b border-slate-200 pb-4 last:border-0">
                   {/* Item Image */}
@@ -151,6 +195,11 @@ export function UserMenuCartPage() {
                   {/* Item Details */}
                   <div className="flex-1">
                     <h3 className="font-semibold text-slate-900">{item.name}</h3>
+                    {item.selectedPriceOption && (
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {item.selectedPriceOption.optionName}
+                      </p>
+                    )}
                     <p className="text-sm text-slate-600">LKR {itemPrice.toFixed(2)}</p>
                   </div>
 
@@ -252,13 +301,24 @@ export function UserMenuCartPage() {
             {/* Checkout Button */}
             <button
               onClick={handleCheckout}
-              className="w-full rounded-lg bg-slate-900 px-6 py-4 text-lg font-semibold text-amber-300 transition hover:bg-slate-800"
+              disabled={isSubmitting}
+              className="w-full rounded-lg bg-slate-900 px-6 py-4 text-lg font-semibold text-amber-300 transition hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              CHECKOUT
+              {isSubmitting ? "Processing..." : "CHECKOUT"}
             </button>
           </div>
         </div>
       </div>
+
+      {/* Checkout Modal */}
+      <CheckoutModal
+        isOpen={isCheckoutModalOpen}
+        onClose={() => setIsCheckoutModalOpen(false)}
+        onConfirm={handleCheckoutConfirm}
+        cartTotal={cartTotal}
+        subtotal={subtotal}
+        tipAmount={tipValue}
+      />
     </div>
   );
 }

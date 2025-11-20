@@ -23,6 +23,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<ItemPriceOption> ItemPriceOptions { get; set; }
     public DbSet<Order> Orders { get; set; }
     public DbSet<OrderItem> OrderItems { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
     public DbSet<EmailVerification> EmailVerifications { get; set; }
     public DbSet<ActivityLog> ActivityLogs { get; set; }
     public DbSet<SystemSetting> SystemSettings { get; set; }
@@ -82,6 +83,25 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(oi => oi.MenuItemId)
             .OnDelete(DeleteBehavior.NoAction);
 
+        // Notification relationships
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.User)
+            .WithMany()
+            .HasForeignKey(n => n.UserId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.Restaurant)
+            .WithMany()
+            .HasForeignKey(n => n.RestaurantId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.Order)
+            .WithMany()
+            .HasForeignKey(n => n.OrderId)
+            .OnDelete(DeleteBehavior.NoAction);
+
         // Indexes
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Email)
@@ -90,6 +110,15 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Order>()
             .HasIndex(o => o.OrderId)
             .IsUnique();
+
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => n.UserId);
+
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => n.RestaurantId);
+
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => n.IsRead);
     }
 }
 

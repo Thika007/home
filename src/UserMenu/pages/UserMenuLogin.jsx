@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { authAPI } from "../../services/api";
 
 export function UserMenuLoginPage() {
   const navigate = useNavigate();
@@ -9,23 +10,40 @@ export function UserMenuLoginPage() {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Connect with authentication API
-    // For now, simulate login
-    const userData = {
-      id: Date.now().toString(),
-      email: email,
-      name: email.split("@")[0],
-    };
-    login(userData);
+    setError("");
+    setLoading(true);
 
-    // Redirect based on query param
-    if (redirect === "checkout") {
-      navigate("/menu-cart");
-    } else {
-      navigate("/menu");
+    try {
+      const response = await authAPI.login(email, password);
+      
+      // Store user data
+      login({
+        id: response.userId,
+        email: response.email,
+        firstName: response.firstName,
+        lastName: response.lastName,
+        name: `${response.firstName} ${response.lastName}`,
+        role: response.role,
+        isEmailVerified: response.isEmailVerified,
+      });
+
+      // Redirect based on query param
+      if (redirect === "checkout") {
+        navigate("/menu-cart");
+      } else {
+        navigate("/menu");
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
+      const errorMessage = error.data?.message || error.message || "Login failed. Please check your credentials.";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -46,13 +64,21 @@ export function UserMenuLoginPage() {
         <p className="mt-1 text-sm text-slate-500">Sign in to your account</p>
 
         <form className="mt-8 space-y-4 text-left" onSubmit={handleSubmit}>
+          {error && (
+            <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-800">Email</label>
             <input
               type="email"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError("");
+              }}
               placeholder="ex: john.smith@email.com"
               className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm shadow-sm transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
             />
@@ -63,7 +89,10 @@ export function UserMenuLoginPage() {
               type="password"
               required
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError("");
+              }}
               placeholder="Enter your password"
               className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm shadow-sm transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
             />
@@ -79,9 +108,10 @@ export function UserMenuLoginPage() {
           </div>
           <button
             type="submit"
-            className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-black"
+            disabled={loading}
+            className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
         <p className="mt-6 text-sm text-slate-500">

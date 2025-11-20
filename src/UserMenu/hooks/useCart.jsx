@@ -61,7 +61,13 @@ export function CartProvider({ children }) {
   const cartItemsCount = cartItems.length;
   
   const subtotal = cartItems.reduce((sum, item) => {
-    const price = parseFloat(item.price) || parseFloat(item.priceDisplay?.replace(/[^\d.]/g, "")) || 0;
+    // Use selected price option price if available, otherwise use base price
+    let price = 0;
+    if (item.selectedPriceOption && item.selectedPriceOption.price) {
+      price = parseFloat(item.selectedPriceOption.price) || 0;
+    } else {
+      price = parseFloat(item.price) || parseFloat(item.priceDisplay?.replace(/[^\d.]/g, "")) || 0;
+    }
     return sum + price * (item.quantity || 1);
   }, 0);
 

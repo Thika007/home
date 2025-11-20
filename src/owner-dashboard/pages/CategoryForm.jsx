@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { RxArrowLeft } from "react-icons/rx";
+import { menuAPI } from "../../services/api";
 
 export function CategoryFormPage() {
   const { menuId, categoryId } = useParams();
@@ -12,33 +13,44 @@ export function CategoryFormPage() {
     name: "",
     description: "",
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
   const isEditMode = !!categoryId;
 
-  // Load menu and category data from localStorage
+  // Load menu and category data from API
   useEffect(() => {
-    const storedMenus = localStorage.getItem("menus");
-    if (storedMenus) {
-      const menus = JSON.parse(storedMenus);
-      const foundMenu = menus.find((m) => m.id === Number(menuId));
-      if (foundMenu) {
-        setMenu(foundMenu);
-      }
-    }
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-    // If editing, load category data
-    if (categoryId) {
-      const storedCategories = localStorage.getItem(`categories_${menuId}`);
-      if (storedCategories) {
-        const categories = JSON.parse(storedCategories);
-        const foundCategory = categories.find((c) => c.id === Number(categoryId));
-        if (foundCategory) {
-          setCategory(foundCategory);
-          setFormData({
-            name: foundCategory.name || "",
-            description: foundCategory.description || "",
-          });
+        // Load menu
+        const menuData = await menuAPI.getMenu(Number(menuId));
+        setMenu(menuData);
+
+        // If editing, load category data
+        if (categoryId) {
+          const categories = await menuAPI.getCategories(Number(menuId));
+          const foundCategory = categories.find((c) => c.id === Number(categoryId));
+          if (foundCategory) {
+            setCategory(foundCategory);
+            setFormData({
+              name: foundCategory.name || "",
+              description: foundCategory.description || "",
+            });
+          }
         }
+      } catch (err) {
+        console.error("Error loading data:", err);
+        setError(err.message || "Failed to load data");
+      } finally {
+        setLoading(false);
       }
+    };
+
+    if (menuId) {
+      loadData();
     }
   }, [menuId, categoryId]);
 
@@ -49,64 +61,69 @@ export function CategoryFormPage() {
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name.trim()) {
       return;
     }
 
-    // Load existing categories from localStorage
-    const storedCategories = localStorage.getItem(`categories_${menuId}`);
-    const categories = storedCategories ? JSON.parse(storedCategories) : [];
+    try {
+      setSaving(true);
+      setError("");
 
-    let newCategoryId = category ? category.id : null;
+      let newCategoryId = categoryId ? Number(categoryId) : null;
 
-    if (isEditMode && category) {
-      // Update existing category
-      const updatedCategories = categories.map((cat) =>
-        cat.id === Number(categoryId)
-          ? {
-              ...cat,
-              name: formData.name.trim(),
-              description: formData.description.trim(),
-            }
-          : cat
-      );
-      localStorage.setItem(`categories_${menuId}`, JSON.stringify(updatedCategories));
-    } else {
-      // Create new category
-      const newCategory = {
-        id: Date.now(),
-        name: formData.name.trim(),
-        description: formData.description.trim(),
-        menuId: Number(menuId),
-        visibility: "visible", // Default visibility
-      };
-      newCategoryId = newCategory.id;
+      if (isEditMode && categoryId) {
+        // Update existing category
+        const updatedCategory = await menuAPI.updateCategory(Number(menuId), Number(categoryId), {
+          name: formData.name.trim(),
+          description: formData.description.trim(),
+          displayOrder: category?.displayOrder || 0,
+          isVisible: category?.isVisible !== false,
+        });
+        newCategoryId = updatedCategory.id;
+      } else {
+        // Create new category
+        const newCategory = await menuAPI.createCategory(Number(menuId), {
+          name: formData.name.trim(),
+          description: formData.description.trim(),
+          displayOrder: 0,
+          isVisible: true,
+        });
+        newCategoryId = newCategory.id;
+      }
 
-      // Add to categories array
-      const updatedCategories = [...categories, newCategory];
-      localStorage.setItem(`categories_${menuId}`, JSON.stringify(updatedCategories));
+      // Navigate back to menu detail page
+      navigate(`/owner-dashboard/menus/${menuId}`, {
+        state: {
+          selectedCategoryId: newCategoryId,
+        },
+        replace: true,
+      });
+    } catch (err) {
+      console.error("Error saving category:", err);
+      setError(err.message || "Failed to save category");
+    } finally {
+      setSaving(false);
     }
-
-    // Navigate back to menu detail page
-    navigate(`/owner-dashboard/menus/${menuId}`, {
-      state: {
-        selectedCategoryId: Number(newCategoryId ?? categoryId),
-      },
-      replace: true,
-    });
   };
 
-  if (!menu) {
+  if (loading || !menu) {
     return (
       <div className="flex items-center justify-center p-8">
-        <p className="text-sm text-slate-500">Loading menu...</p>
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-emerald-500 border-r-transparent"></div>
+        <span className="ml-3 text-sm text-slate-500">Loading...</span>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-800">
+          {error}
+        </div>
+      )}
+
       {/* Header with back button and breadcrumb */}
       <div className="flex items-center gap-3">
         <button
@@ -190,9 +207,10 @@ export function CategoryFormPage() {
           <button
             type="button"
             onClick={handleSave}
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+            disabled={saving}
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Save
+            {saving ? "Saving..." : "Save"}
           </button>
         </div>
       </section>

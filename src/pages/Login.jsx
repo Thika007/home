@@ -38,6 +38,11 @@ export function LoginPage() {
       // Store user info in localStorage for frontend state management
       localStorage.setItem("user", JSON.stringify(data));
       
+      // Store restaurantId for owners (used for public menu display)
+      if (data.role === "Owner" && data.restaurantId) {
+        localStorage.setItem("restaurantId", data.restaurantId.toString());
+      }
+      
       // Navigate based on role
       if (data.role === "Owner") {
         navigate("/owner-dashboard");
@@ -55,14 +60,6 @@ export function LoginPage() {
 
   const handleBack = () => {
     navigate("/");
-  };
-
-  const handleOwnerDashboardDemo = () => {
-    navigate("/owner-dashboard");
-  };
-
-  const handleSystemAdminDashboardDemo = () => {
-    navigate("/system-admin-dashboard");
   };
 
   return (
@@ -167,27 +164,6 @@ export function LoginPage() {
                 Login here
               </button>
             </p>
-          </div>
-          <div className="mt-10 space-y-4">
-            <h2 className="text-lg font-semibold md:text-xl">Preview upcoming dashboards</h2>
-            <div className="flex flex-col gap-3 md:flex-row">
-              <Button
-                type="button"
-                title="Demo Owner Dashboard"
-                onClick={handleOwnerDashboardDemo}
-                className="flex-1 justify-center"
-              >
-                Demo Owner Dashboard
-              </Button>
-              <Button
-                type="button"
-                title="Demo System Admin Dashboard"
-                onClick={handleSystemAdminDashboardDemo}
-                className="flex-1 justify-center"
-              >
-                Demo System Admin Dashboard
-              </Button>
-            </div>
           </div>
         </motion.div>
       </div>

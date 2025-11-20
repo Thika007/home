@@ -1,12 +1,37 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRestaurantInfo } from "../hooks/useRestaurantInfo";
 import { useCart } from "../hooks/useCart";
+import { useAuth } from "../hooks/useAuth";
+import { NotificationDropdown } from "./NotificationDropdown";
 
 export function UserMenuNavbar() {
   const navigate = useNavigate();
   const restaurant = useRestaurantInfo();
   const { cartItemsCount } = useCart();
+  const { user, isAuthenticated, logout } = useAuth();
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setUserMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/menu");
+    setUserMenuOpen(false);
+  };
 
   return (
     <header className="flex w-full items-center justify-center bg-slate-950 px-6 py-4 text-white">
@@ -45,6 +70,8 @@ export function UserMenuNavbar() {
               🌐
             </span>
           </button>
+          {/* Notification Icon */}
+          <NotificationDropdown />
           {/* Cart Icon */}
           <button
             type="button"
@@ -72,13 +99,67 @@ export function UserMenuNavbar() {
               </span>
             )}
           </button>
-          <button
-            type="button"
-            onClick={() => navigate("/menu-login")}
-            className="text-amber-300 transition hover:text-amber-200"
-          >
-            Login
-          </button>
+          {/* User Menu or Login Button */}
+          {isAuthenticated && user ? (
+            <div className="relative" ref={userMenuRef}>
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2 text-amber-300 transition hover:text-amber-200"
+              >
+                <span className="hidden sm:inline">Welcome, {user.firstName || user.name?.split(" ")[0] || "User"}</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+              </button>
+              {userMenuOpen && (
+                <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-lg bg-white shadow-2xl border border-slate-200">
+                  <div className="p-3 border-b border-slate-200">
+                    <p className="text-sm font-semibold text-slate-900">{user.name || user.email}</p>
+                    <p className="text-xs text-slate-500">{user.email}</p>
+                  </div>
+                  <div className="p-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigate("/menu-order-history");
+                        setUserMenuOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded transition"
+                    >
+                      Order History
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded transition"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigate("/menu-login")}
+              className="text-amber-300 transition hover:text-amber-200"
+            >
+              Login
+            </button>
+          )}
         </nav>
       </div>
     </header>

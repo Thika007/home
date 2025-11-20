@@ -31,6 +31,7 @@ public class LoginResponse
     public bool IsEmailVerified { get; set; }
     public bool IsApproved { get; set; } // For owners
     public string? ProfilePictureUrl { get; set; } // For owners
+    public int? RestaurantId { get; set; } // For owners - their restaurant ID
 }
 
 public class VerifyEmailRequest
@@ -80,5 +81,14 @@ public class OwnerResponse
     public bool IsApproved { get; set; }
     public DateTime? ApprovedAt { get; set; }
     public DateTime CreatedAt { get; set; }
+}
+
+public class RegisterCustomerRequest
+{
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public string? Phone { get; set; }
 }
 

@@ -1,1 +1,9 @@
+wwwroot\uploads\owners\2\profile_c1fa4de2-4a1b-45bf-a772-fd7da3d0af06.jpeg
+wwwroot\uploads\owners\3\profile_828ea39f-4452-4922-bd63-64d4e7c3c85a.jpeg
+wwwroot\uploads\restaurants\1\about_39141941-f40d-4ef9-8ddf-4b4e76b1cbb7.jpeg
+wwwroot\uploads\restaurants\1\menu-items\item_2_90a19645-96c5-403b-8e27-729eb6ea17ba.jpeg
 wwwroot\uploads\restaurants\1\why-choose-us_60eb8fba-a2ef-4422-ad54-e0f64ca6ee2d.jpeg
+wwwroot\uploads\restaurants\2\about_800a2274-eb88-4d6f-afb0-061d2cefaf89.jpeg
+wwwroot\uploads\restaurants\2\cover_23955301-be49-4a3e-8f41-71ac73970e67.jpeg
+wwwroot\uploads\restaurants\2\logo_0d50d026-46f9-4482-8410-20315830a0ca.png
+wwwroot\uploads\restaurants\2\why-choose-us_2a843239-d29d-47b0-9022-f08ff3dd5853.jpeg

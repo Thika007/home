@@ -36,6 +36,36 @@ public class MenuItem
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     
+    // Additional fields
+    [MaxLength(500)]
+    public string? Labels { get; set; }
+    
+    [MaxLength(1000)]
+    public string? DisplayOn { get; set; } // JSON serialized array
+    
+    [MaxLength(100)]
+    public string? Size { get; set; }
+    
+    [MaxLength(50)]
+    public string? Unit { get; set; }
+    
+    [MaxLength(50)]
+    public string? PreparationTime { get; set; }
+    
+    public bool Featured { get; set; } = false;
+    
+    [MaxLength(200)]
+    public string? Recommended { get; set; }
+    
+    public bool MarkAsSoldOut { get; set; } = false;
+    
+    // Future fields (for next version)
+    [MaxLength(500)]
+    public string? IngredientWarnings { get; set; }
+    
+    [MaxLength(200)]
+    public string? TaxCategories { get; set; }
+    
     // Navigation
     public ICollection<ItemPriceOption> PriceOptions { get; set; } = new List<ItemPriceOption>();
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();

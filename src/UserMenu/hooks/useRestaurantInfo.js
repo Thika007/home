@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { restaurantAPI } from "../../services/api";
 
 const FALLBACK_RESTAURANT = {
+  id: 1,
   name: "RB Theekshana",
   tagline: "Passionate about good food and service",
   description:
@@ -45,11 +46,27 @@ export function useRestaurantInfo() {
       }
 
       try {
-        // Get restaurant ID from URL params, localStorage, or use default (1)
+        // Get restaurant ID from URL params, logged-in user, or localStorage
         let restaurantId = params?.restaurantId;
         if (!restaurantId) {
-          const stored = localStorage.getItem("restaurantId");
-          restaurantId = stored ? parseInt(stored, 10) : 1;
+          // Try to get from logged-in owner's user data first
+          try {
+            const userStr = localStorage.getItem("user");
+            if (userStr) {
+              const user = JSON.parse(userStr);
+              if (user.role === "Owner" && user.restaurantId) {
+                restaurantId = parseInt(user.restaurantId, 10);
+              }
+            }
+          } catch (error) {
+            console.warn("Failed to parse user data:", error);
+          }
+          
+          // Fallback to localStorage
+          if (!restaurantId) {
+            const stored = localStorage.getItem("restaurantId");
+            restaurantId = stored ? parseInt(stored, 10) : 1;
+          }
         }
 
         // Fetch from API
@@ -57,6 +74,7 @@ export function useRestaurantInfo() {
 
         // Map API response to expected format
         const mappedData = {
+          id: apiData.id || restaurantId || 1, // Include restaurant ID
           name: apiData.name || FALLBACK_RESTAURANT.name,
           tagline: apiData.tagline || FALLBACK_RESTAURANT.tagline,
           description: apiData.description || FALLBACK_RESTAURANT.description,
@@ -88,12 +106,24 @@ export function useRestaurantInfo() {
             const parsed = JSON.parse(stored);
             setRestaurant({
               ...FALLBACK_RESTAURANT,
+              id: restaurantId || parsed.id || 1, // Ensure ID is set
               ...parsed,
               hours: Array.isArray(parsed?.hours) && parsed.hours.length ? parsed.hours : FALLBACK_RESTAURANT.hours,
+            });
+          } else {
+            // Use fallback with restaurant ID
+            setRestaurant({
+              ...FALLBACK_RESTAURANT,
+              id: restaurantId || 1,
             });
           }
         } catch (localError) {
           console.warn("Failed to parse restaurant info from localStorage", localError);
+          // Use fallback with restaurant ID
+          setRestaurant({
+            ...FALLBACK_RESTAURANT,
+            id: restaurantId || 1,
+          });
         }
       } finally {
         setLoading(false);

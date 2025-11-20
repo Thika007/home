@@ -66,6 +66,14 @@ export const authAPI = {
     });
   },
 
+  // Customer registration
+  registerCustomer: async (data) => {
+    return apiRequest("/auth/register-customer", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
   // Login
   login: async (email, password) => {
     return apiRequest("/auth/login", {
@@ -296,6 +304,218 @@ export const restaurantAPI = {
     }
 
     return response.json();
+  },
+};
+
+/**
+ * Menu API endpoints
+ */
+export const menuAPI = {
+  // Get all menus for owner's restaurant
+  getMenus: async () => {
+    return apiRequest("/menu", {
+      method: "GET",
+    });
+  },
+
+  // Get single menu with categories and items
+  getMenu: async (menuId) => {
+    return apiRequest(`/menu/${menuId}`, {
+      method: "GET",
+    });
+  },
+
+  // Create new menu
+  createMenu: async (data) => {
+    return apiRequest("/menu", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Update menu
+  updateMenu: async (menuId, data) => {
+    return apiRequest(`/menu/${menuId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Delete menu
+  deleteMenu: async (menuId) => {
+    return apiRequest(`/menu/${menuId}`, {
+      method: "DELETE",
+    });
+  },
+
+  // Get categories for menu
+  getCategories: async (menuId) => {
+    return apiRequest(`/menu/${menuId}/categories`, {
+      method: "GET",
+    });
+  },
+
+  // Create category
+  createCategory: async (menuId, data) => {
+    return apiRequest(`/menu/${menuId}/categories`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Update category
+  updateCategory: async (menuId, categoryId, data) => {
+    return apiRequest(`/menu/${menuId}/categories/${categoryId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Delete category
+  deleteCategory: async (menuId, categoryId) => {
+    return apiRequest(`/menu/${menuId}/categories/${categoryId}`, {
+      method: "DELETE",
+    });
+  },
+
+  // Get items for category
+  getItems: async (menuId, categoryId) => {
+    return apiRequest(`/menu/${menuId}/categories/${categoryId}/items`, {
+      method: "GET",
+    });
+  },
+
+  // Create item
+  createItem: async (menuId, categoryId, data) => {
+    return apiRequest(`/menu/${menuId}/categories/${categoryId}/items`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Update item
+  updateItem: async (menuId, categoryId, itemId, data) => {
+    return apiRequest(`/menu/${menuId}/categories/${categoryId}/items/${itemId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Delete item
+  deleteItem: async (menuId, categoryId, itemId) => {
+    return apiRequest(`/menu/${menuId}/categories/${categoryId}/items/${itemId}`, {
+      method: "DELETE",
+    });
+  },
+
+  // Upload menu item image
+  uploadItemImage: async (menuId, categoryId, itemId, file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const url = `${API_BASE_URL}/menu/${menuId}/categories/${categoryId}/items/${itemId}/upload-image`;
+    const response = await fetch(url, {
+      method: "POST",
+      credentials: "include",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: "Upload failed" }));
+      throw new Error(error.message || "Upload failed");
+    }
+
+    return response.json();
+  },
+
+  // Get public menu (no auth required)
+  getPublicMenu: async (restaurantId) => {
+    const url = `${API_BASE_URL}/menu/public/${restaurantId}`;
+    const response = await fetch(url, {
+      method: "GET",
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: "Failed to fetch menu" }));
+      throw new Error(error.message || "Failed to fetch menu");
+    }
+
+    return response.json();
+  },
+};
+
+/**
+ * Notification API endpoints
+ */
+export const notificationAPI = {
+  // Get user notifications
+  getNotifications: async () => {
+    return apiRequest("/notifications", {
+      method: "GET",
+    });
+  },
+
+  // Get unread count
+  getUnreadCount: async () => {
+    return apiRequest("/notifications/unread-count", {
+      method: "GET",
+    });
+  },
+
+  // Mark notification as read
+  markAsRead: async (notificationId) => {
+    return apiRequest(`/notifications/${notificationId}/read`, {
+      method: "PUT",
+    });
+  },
+
+  // Mark all notifications as read
+  markAllAsRead: async () => {
+    return apiRequest("/notifications/read-all", {
+      method: "PUT",
+    });
+  },
+};
+
+/**
+ * Order API endpoints
+ */
+export const orderAPI = {
+  // Create order (can be guest or authenticated)
+  createOrder: async (orderData) => {
+    return apiRequest("/orders", {
+      method: "POST",
+      body: JSON.stringify(orderData),
+    });
+  },
+
+  // Get user orders (authenticated only)
+  getUserOrders: async () => {
+    return apiRequest("/orders", {
+      method: "GET",
+    });
+  },
+
+  // Get single order (authenticated only)
+  getOrder: async (orderId) => {
+    return apiRequest(`/orders/${orderId}`, {
+      method: "GET",
+    });
+  },
+
+  // Get restaurant orders (owner only)
+  getRestaurantOrders: async (restaurantId) => {
+    return apiRequest(`/orders/restaurant/${restaurantId}`, {
+      method: "GET",
+    });
+  },
+
+  // Update order status (owner only)
+  updateOrderStatus: async (orderId, status) => {
+    return apiRequest(`/orders/${orderId}/status`, {
+      method: "PUT",
+      body: JSON.stringify({ status }),
+    });
   },
 };
 
